@@ -9,6 +9,7 @@ function setupControls({
   getLastDimensions,
   setAlgorithm,
   setDitherStrength,
+  setBrightMode,
   saveSCR,
 }) {
   // DOM elements
