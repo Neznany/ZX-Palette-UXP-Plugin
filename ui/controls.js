@@ -1,6 +1,22 @@
 // src/ui/controls.js
 const { app, imaging, core } = require("photoshop");
 
+function getDomElements() {
+  return {
+    btnDown: document.getElementById("scaleDown"),
+    btnUp: document.getElementById("scaleUp"),
+    lblScale: document.getElementById("scaleLabel"),
+    selSys: document.getElementById("sysScaleSel"),
+    img: document.getElementById("previewImg"),
+    btnApply: document.getElementById("applyBtn"),
+    selAlg: document.getElementById("ditherAlgSel"),
+    rngStr: document.getElementById("ditherStrength"),
+    lblStr: document.getElementById("ditherLabel"),
+    brightSel: document.getElementById("brightModeSel"),
+    saveScrBtn: document.getElementById("saveScrBtn"),
+  };
+}
+
 function setupControls({
   zxFilter,
   updatePreview,
@@ -12,58 +28,65 @@ function setupControls({
   setBrightMode,
   saveSCR,
 }) {
-  // DOM elements
-  const btnDown = document.getElementById("scaleDown");
-  const btnUp = document.getElementById("scaleUp");
-  const lblScale = document.getElementById("scaleLabel");
-  const selSys = document.getElementById("sysScaleSel");
-  const img = document.getElementById("previewImg");
-  const btnApply = document.getElementById("applyBtn");
-  const selAlg = document.getElementById("ditherAlgSel");
-  const rngStr = document.getElementById("ditherStrength");
-  const lblStr = document.getElementById("ditherLabel");
-  const brightSel = document.getElementById("brightModeSel");
-  const saveScrBtn = document.getElementById("saveScrBtn");
+  const {
+    btnDown,
+    btnUp,
+    lblScale,
+    selSys,
+    img,
+    btnApply,
+    selAlg,
+    rngStr,
+    lblStr,
+    brightSel,
+    saveScrBtn,
+  } = getDomElements();
+
+  // Helper to update scale label and preview
+  function updateScaleLabelAndPreview() {
+    lblScale.textContent = getScale() + "x";
+    updatePreview();
+  }
 
   // Algorithm selector
-  selAlg.onchange = () => {
+  selAlg?.addEventListener("change", () => {
     setAlgorithm(selAlg.value);
     updatePreview();
-  };
+  });
 
-  brightSel.onchange = () => {
+  // Bright mode selector
+  brightSel?.addEventListener("change", () => {
     setBrightMode(brightSel.value);
     updatePreview();
-  };
+  });
 
-  saveScrBtn.onclick = () => {
+  // Save SCR button
+  saveScrBtn?.addEventListener("click", () => {
     saveSCR().catch(console.error);
-  };
+  });
 
   // Strength slider
-  rngStr.oninput = () => {
+  rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
     updatePreview();
-  };
+  });
 
   // Scale controls
-  btnDown.onclick = () => {
+  btnDown?.addEventListener("click", () => {
     let s = getScale();
     if (s > 1) setScale(s - 1);
-    lblScale.textContent = getScale() + "x";
-    updatePreview();
-  };
+    updateScaleLabelAndPreview();
+  });
 
-  btnUp.onclick = () => {
+  btnUp?.addEventListener("click", () => {
     let s = getScale();
     if (s < 4) setScale(s + 1);
-    lblScale.textContent = getScale() + "x";
-    updatePreview();
-  };
+    updateScaleLabelAndPreview();
+  });
 
-  selSys.onchange = () => {
+  selSys?.addEventListener("change", () => {
     const { lastW, lastH } = getLastDimensions();
     if (lastW && lastH) {
       const ss = parseFloat(selSys.value) || 1;
@@ -71,10 +94,10 @@ function setupControls({
       img.style.height = lastH / ss + "px";
     }
     updatePreview();
-  };
+  });
 
   // Apply button
-  btnApply.onclick = async () => {
+  btnApply?.addEventListener("click", async () => {
     btnApply.disabled = true;
     try {
       await core.executeAsModal(async () => {
@@ -120,8 +143,7 @@ function setupControls({
       btnApply.disabled = false;
       updatePreview();
     }
-  };
-
+  });
 }
 
 module.exports = { setupControls };

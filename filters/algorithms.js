@@ -346,6 +346,37 @@ function ditherRandomThreshold(channel, w, h, t) {
   }
 }
 
+
+// 7x7 line-diag pattern (діагональні лінії, як на зразку)
+const LINE_DIAG_7X7 = [
+  [1,0,0,0,0,0,0],
+  [0,1,0,0,0,0,0],
+  [0,0,1,0,0,0,0],
+  [0,0,0,1,0,0,0],
+  [0,0,0,0,1,0,0],
+  [0,0,0,0,0,1,0],
+  [0,0,0,0,0,0,1],
+];
+
+/**
+ * Ordered dithering with 7x7 diagonal line pattern.
+ * t ∈ [0,1] — strength (0 = hard threshold, 1 = full pattern)
+ */
+function ditherLineDiag7x7(channel, w, h, t) {
+  const N = 7;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      const vNorm = channel[idx] / 255;
+      // 1 — лінія, 0 — фон
+      const m = LINE_DIAG_7X7[y % N][x % N];
+      // t=0 — жорсткий поріг, t=1 — чіткі лінії
+      const thr = (1 - t) * 0.5 + t * m * 0.5; // 0.5 або 0
+      channel[idx] = vNorm > thr ? 255 : 0;
+    }
+  }
+}
+
 module.exports = {
   fs:            ditherFS,
   jjn:           ditherJJN,
@@ -357,5 +388,6 @@ module.exports = {
   bluenoise:     ditherBlueNoise,
   dot:           ditherDotDiffusion,
   clustered:     ditherClustered,
-  random:        ditherRandomThreshold
+  random:        ditherRandomThreshold,
+  linediag7x7:   ditherLineDiag7x7
 };
