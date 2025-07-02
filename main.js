@@ -2,7 +2,6 @@
 const { app, imaging, core, action } = require("photoshop");
 const { setupControls } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
-const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
@@ -23,29 +22,9 @@ let busy = false;
 let prevB64 = "";
 let lastW = 0,
   lastH = 0;
-let selectedAlg = "dot";
-let ditherT = 0.5;
+let selectedAlg = "linediag7x7"; //dot
+let ditherT = 1;
 let brightMode = "on";
-
-const ZX_BASE = [
-  [0, 0, 0],
-  [0, 0, 192],
-  [192, 0, 0],
-  [192, 0, 192],
-  [0, 192, 0],
-  [0, 192, 192],
-  [192, 192, 0],
-  [192, 192, 192],
-];
-
-const ZX_PALETTE = [];
-for (let i = 0; i < 8; i++) {
-  ZX_PALETTE.push({ rgb: ZX_BASE[i], bright: false });
-}
-for (let i = 1; i < 8; i++) {
-  const [r, g, b] = ZX_BASE[i].map(v => v === 0 ? 0 : 255);
-  ZX_PALETTE.push({ rgb: [r, g, b], bright: true });
-}
 
 function getScale() {
   return scale;
@@ -68,7 +47,6 @@ function setBrightMode(v) {
 
 // Core filter
 function zxFilter(rgba, w, h) {
-  saturate100(rgba);
   ditherSeparateChannels(rgba, w, h, selectedAlg, ditherT);
   reduceToDominantPair(rgba, w, h);
 }
@@ -110,7 +88,7 @@ async function fetchThumb() {
   // 3) Фільтруємо
   zxFilter(rgba, baseW, baseH);
 
-  // 4) Upscale + JPEG encode (як у вас було)
+  // 4) Upscale + JPEG encode
   const s = scale;
   const w2 = baseW * s;
   const h2 = baseH * s;

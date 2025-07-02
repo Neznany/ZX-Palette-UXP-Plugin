@@ -10,6 +10,54 @@ const BAYER8 = [
   [63, 31, 55, 23, 61, 29, 53, 21],
 ];
 
+/**
+ * Ordered (Bayer) dithering по-канально.
+ * t ∈ [0,1] — сила дізерингу:
+ *   0 → рівень порогу 0.5 (жорсткий поріг),
+ *   1 → повний Bayer (поріг = матриця/64).
+ *
+ * @param {Uint8Array} channel — одноканальний буфер (0…255)
+ * @param {number} w — ширина
+ * @param {number} h — висота
+ * @param {number} t — сила дізерингу
+ */
+function ditherBayer(channel, w, h, t) {
+  const N = 8;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      const oldV = channel[idx];
+      // нормалізуємо в [0…1]
+      const vNorm = oldV / 255;
+      // обчислюємо зміщений поріг:
+      // при t=0 → thr=0.5, при t=1 → thr=BAYER8/64
+      const m = BAYER8[y % N][x % N] / (N * N);
+      const thr = (1 - t) * 0.5 + t * m;
+      channel[idx] = vNorm > thr ? 255 : 0;
+    }
+  }
+}
+
+// ——— Dot Diffusion (4×4 класова матриця) ———
+const DOT_CLASS = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+];
+function ditherDotDiffusion(channel, w, h, t) {
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const vNorm = channel[i] / 255;
+      const cls = DOT_CLASS[y % 4][x % 4] / 16;
+      const thr = (1 - t) * 0.5 + t * cls;
+      channel[i] = vNorm > thr ? 255 : 0;
+    }
+  }
+}
+
+
 // ——— Floyd–Steinberg (FS) ———
 function ditherFS(channel, w, h, t) {
   const err = Array(h)
@@ -88,34 +136,6 @@ function ditherAtkinson(channel, w, h, t) {
       }
       // через два рядки вниз
       if (y + 2 < h) err[y + 2][x] += qe * wA;
-    }
-  }
-}
-
-/**
- * Ordered (Bayer) dithering по-канально.
- * t ∈ [0,1] — сила дізерингу:
- *   0 → рівень порогу 0.5 (жорсткий поріг),
- *   1 → повний Bayer (поріг = матриця/64).
- *
- * @param {Uint8Array} channel — одноканальний буфер (0…255)
- * @param {number} w — ширина
- * @param {number} h — висота
- * @param {number} t — сила дізерингу
- */
-function ditherBayer(channel, w, h, t) {
-  const N = 8;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x;
-      const oldV = channel[idx];
-      // нормалізуємо в [0…1]
-      const vNorm = oldV / 255;
-      // обчислюємо зміщений поріг:
-      // при t=0 → thr=0.5, при t=1 → thr=BAYER8/64
-      const m = BAYER8[y % N][x % N] / (N * N);
-      const thr = (1 - t) * 0.5 + t * m;
-      channel[idx] = vNorm > thr ? 255 : 0;
     }
   }
 }
@@ -298,24 +318,6 @@ function ditherBurkes(channel, w, h, t) {
   }
 }
 
-// ——— Dot Diffusion (4×4 класова матриця) ———
-const DOT_CLASS = [
-  [0, 8, 2, 10],
-  [12, 4, 14, 6],
-  [3, 11, 1, 9],
-  [15, 7, 13, 5],
-];
-function ditherDotDiffusion(channel, w, h, t) {
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      const vNorm = channel[i] / 255;
-      const cls = DOT_CLASS[y % 4][x % 4] / 16;
-      const thr = (1 - t) * 0.5 + t * cls;
-      channel[i] = vNorm > thr ? 255 : 0;
-    }
-  }
-}
 
 // ——— Clustered Ordered Dithering (4×4) ———
 const CLUSTER_MASK = [
@@ -347,32 +349,38 @@ function ditherRandomThreshold(channel, w, h, t) {
 }
 
 
-// 7x7 line-diag pattern (діагональні лінії, як на зразку)
-const LINE_DIAG_7X7 = [
-  [1,0,0,0,0,0,0],
-  [0,1,0,0,0,0,0],
-  [0,0,1,0,0,0,0],
-  [0,0,0,1,0,0,0],
-  [0,0,0,0,1,0,0],
-  [0,0,0,0,0,1,0],
-  [0,0,0,0,0,0,1],
+// 7x7 multi-level diagonal pattern (8 градацій, як на зразку)
+// Кожне число — "поріг" для появи діагональної лінії (0…7)
+const THRESHOLD7 = [
+  [0,5,3,1,6,4,2],
+  [5,3,1,6,4,2,0],
+  [3,1,6,4,2,0,5],
+  [1,6,4,2,0,5,3],
+  [6,4,2,0,5,3,1],
+  [4,2,0,5,3,1,6],
+  [2,0,5,3,1,6,4],
 ];
 
 /**
- * Ordered dithering with 7x7 diagonal line pattern.
- * t ∈ [0,1] — strength (0 = hard threshold, 1 = full pattern)
+ * 7×7 діагональний дізеринг по одному каналу
+ * @param {Uint8Array|Float32Array} channel — буфер одного каналу (0…255)
+ * @param {number} w — ширина
+ * @param {number} h — висота
+ * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
  */
 function ditherLineDiag7x7(channel, w, h, t) {
-  const N = 7;
+  t *= .95; // зменшуємо t, щоб поріг не був занадто високим
+  const N =6;             // max поріг
+  const mid = 255 / 2;      // базовий поріг при t=0
   for (let y = 0; y < h; y++) {
+    const row = y % 7;
+    const base = y * w;
     for (let x = 0; x < w; x++) {
-      const idx = y * w + x;
-      const vNorm = channel[idx] / 255;
-      // 1 — лінія, 0 — фон
-      const m = LINE_DIAG_7X7[y % N][x % N];
-      // t=0 — жорсткий поріг, t=1 — чіткі лінії
-      const thr = (1 - t) * 0.5 + t * m * 0.5; // 0.5 або 0
-      channel[idx] = vNorm > thr ? 255 : 0;
+      const idx      = base + x;
+      const v        = channel[idx];
+      const thrPat   = (THRESHOLD7[row][x % 7] / N) * 255;
+      const thr      = mid * (1 - t) + thrPat * t;
+      channel[idx]   = v > thr ? 255 : 0;
     }
   }
 }
