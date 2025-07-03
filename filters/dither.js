@@ -2,6 +2,8 @@
 
 // filters/dither.js
 const algMap = require("./algorithms");
+// Оновлено шлях до утиліт, якщо потрібно
+// const { getRgbaPixels } = require("../utils/utils");
 
 function ditherSeparateChannels(rgba, w, h, algoKey, strengthT) {
   const fn = algMap[algoKey];

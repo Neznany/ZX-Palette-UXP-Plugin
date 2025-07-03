@@ -1,5 +1,6 @@
 // src/ui/controls.js
 const { app, imaging, core } = require("photoshop");
+const { getRgbaPixels } = require("../filters/utils");
 
 function getDomElements() {
   return {
@@ -104,26 +105,8 @@ function setupControls({
         const d = app.activeDocument;
         const W = Math.round(+d.width);
         const H = Math.round(+d.height);
-        const { imageData: srcData } = await imaging.getPixels({
-          sourceBounds: { left: 0, top: 0, width: W, height: H },
-          targetSize: { width: W, height: H },
-          applyAlpha: false,
-        });
-        const data = await srcData.getData();
-        srcData.dispose();
-        let rgba;
-        const px = W * H;
-        if (data.length === px * 3) {
-          rgba = new Uint8Array(px * 4);
-          for (let i = 0; i < px; i++) {
-            rgba[i * 4] = data[i * 3];
-            rgba[i * 4 + 1] = data[i * 3 + 1];
-            rgba[i * 4 + 2] = data[i * 3 + 2];
-            rgba[i * 4 + 3] = 255;
-          }
-        } else {
-          rgba = data;
-        }
+        // Отримуємо RGBA через утиліту
+        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
         zxFilter(rgba, W, H);
         const newData = await imaging.createImageDataFromBuffer(rgba, {
           width: W,

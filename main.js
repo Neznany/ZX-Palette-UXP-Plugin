@@ -2,10 +2,12 @@
 const { app, imaging, core, action } = require("photoshop");
 const { setupControls } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
+const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
+const { getRgbaPixels } = require("./utils/utils");
 
 // DOM elements
 const img = document.getElementById("previewImg");
@@ -23,7 +25,7 @@ let prevB64 = "";
 let lastW = 0,
   lastH = 0;
 let selectedAlg = "linediag7x7"; //dot
-let ditherT = 1;
+let ditherT = 0.5;
 let brightMode = "on";
 
 function getScale() {
@@ -47,75 +49,52 @@ function setBrightMode(v) {
 
 // Core filter
 function zxFilter(rgba, w, h) {
+  //saturate100(rgba);
   ditherSeparateChannels(rgba, w, h, selectedAlg, ditherT);
   reduceToDominantPair(rgba, w, h);
 }
 
 async function fetchThumb() {
-  const d = app.activeDocument;
-  const baseW = Math.round(+d.width);
-  const baseH = Math.round(+d.height);
+  return await core.executeAsModal(async () => {
+    const d = app.activeDocument;
+    const baseW = Math.round(+d.width);
+    const baseH = Math.round(+d.height);
 
-  // 1) Отримуємо пікселі (RGB або RGBA)
-  const { imageData } = await core.executeAsModal(
-    () =>
-      imaging.getPixels({
-        sourceBounds: { left: 0, top: 0, width: baseW, height: baseH },
-        targetSize: { width: baseW, height: baseH },
-        applyAlpha: false,
-      }),
-    { commandName: "GetPixels (base)" }
-  );
-  const data = await imageData.getData();
-  imageData.dispose();
+    // 1) Отримуємо RGBA-пікселі через утиліту
+    const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH }, false);
 
-  // 2) Перетворюємо RGB→RGBA, якщо треба
-  let rgba;
-  const pxCount = baseW * baseH;
-  if (data.length === pxCount * 3) {
-    rgba = new Uint8Array(pxCount * 4);
-    for (let i = 0; i < pxCount; i++) {
-      rgba[i * 4] = data[i * 3];
-      rgba[i * 4 + 1] = data[i * 3 + 1];
-      rgba[i * 4 + 2] = data[i * 3 + 2];
-      rgba[i * 4 + 3] = 255;
+    // 2) Фільтруємо
+    zxFilter(rgba, baseW, baseH);
+
+    // 3) Upscale + JPEG encode (як у вас було)
+    const s = scale;
+    const w2 = baseW * s;
+    const h2 = baseH * s;
+    const outBuf = new Uint8Array(w2 * h2 * 3);
+    for (let y = 0; y < h2; y++) {
+      const srcY = Math.floor(y / s);
+      for (let x = 0; x < w2; x++) {
+        const srcX = Math.floor(x / s);
+        const i4 = (srcY * baseW + srcX) * 4;
+        const i3 = (y * w2 + x) * 3;
+        outBuf[i3] = rgba[i4];
+        outBuf[i3 + 1] = rgba[i4 + 1];
+        outBuf[i3 + 2] = rgba[i4 + 2];
+      }
     }
-  } else {
-    // вже RGBA
-    rgba = data;
-  }
+    const rgbData = await imaging.createImageDataFromBuffer(outBuf, {
+      width: w2, height: h2, components: 3, colorSpace: "RGB",
+    });
+    const b64 = await imaging.encodeImageData({
+      imageData: rgbData,
+      base64: true,
+      format: "jpg",
+      quality: 0.9,
+    });
+    rgbData.dispose();
 
-  // 3) Фільтруємо
-  zxFilter(rgba, baseW, baseH);
-
-  // 4) Upscale + JPEG encode
-  const s = scale;
-  const w2 = baseW * s;
-  const h2 = baseH * s;
-  const outBuf = new Uint8Array(w2 * h2 * 3);
-  for (let y = 0; y < h2; y++) {
-    const srcY = Math.floor(y / s);
-    for (let x = 0; x < w2; x++) {
-      const srcX = Math.floor(x / s);
-      const i4 = (srcY * baseW + srcX) * 4;
-      const i3 = (y * w2 + x) * 3;
-      outBuf[i3] = rgba[i4];
-      outBuf[i3 + 1] = rgba[i4 + 1];
-      outBuf[i3 + 2] = rgba[i4 + 2];
-    }
-  }
-  const rgbData = await imaging.createImageDataFromBuffer(outBuf, {
-    width: w2, height: h2, components: 3, colorSpace: "RGB",
-  });
-  const b64 = await imaging.encodeImageData({
-    imageData: rgbData,
-    base64: true,
-    format: "jpg",
-    quality: 0.9,
-  });
-  rgbData.dispose();
-
-  return { b64, w: w2, h: h2 };
+    return { b64, w: w2, h: h2 };
+  }, { commandName: "ZX Filter: Fetch Preview Thumb" });
 }
 
 
@@ -175,27 +154,9 @@ async function saveSCR() {
       W = Math.round(+doc.width);
       H = Math.round(+doc.height);
 
-      const { imageData } = await imaging.getPixels({
-        sourceBounds: { left:0, top:0, width:W, height:H },
-        targetSize:    { width:W, height:H },
-        applyAlpha:    false
-      });
-      const raw = await imageData.getData();
-      imageData.dispose();
-
-      const pxCount = W * H;
-      if (raw.length === pxCount * 3) {
-        pixelData = new Uint8Array(pxCount * 4);
-        for (let i = 0; i < pxCount; i++) {
-          pixelData[i*4]   = raw[i*3];
-          pixelData[i*4+1] = raw[i*3+1];
-          pixelData[i*4+2] = raw[i*3+2];
-          pixelData[i*4+3] = 255;
-        }
-      } else {
-        pixelData = raw;
-      }
-
+      // Отримуємо RGBA-пікселі через утиліту
+      const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
+      pixelData = rgba;
       zxFilter(pixelData, W, H);
     },
     { commandName: "Fetch & Filter Pixels" }
