@@ -4,6 +4,7 @@ const { setupControls, loadSettings } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
 const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
+const { rgbaToIndexed, indexedToRgba } = require("./utils/indexed");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
@@ -35,6 +36,7 @@ let selectedAlg = (function() {
   return "fs"; // fallback to Floyd-Steinberg
 })();
 let ditherT = 0.5;
+let brightMode = "on";
 
 // ZX Spectrum “Primary” palette (8 base + bright variants)
 const ZX_BASE = [
@@ -78,9 +80,10 @@ function setBrightMode(v) {
 
 // Core filter
 function zxFilter(rgba, w, h) {
-  //saturate100(rgba);
   ditherSeparateChannels(rgba, w, h, selectedAlg, ditherT);
   reduceToDominantPair(rgba, w, h);
+  const bright = brightMode === "on" ? 1 : 0;
+  return rgbaToIndexed(rgba, w, h, { bright, flash: 0 });
 }
 
 async function fetchThumb() {
@@ -92,8 +95,9 @@ async function fetchThumb() {
     // 1) Отримуємо RGBA-пікселі через утиліту
     const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH }, false);
 
-    // 2) Фільтруємо
-    zxFilter(rgba, baseW, baseH);
+    // 2) Фільтруємо та отримуємо індексований буфер
+    const indexed = zxFilter(rgba, baseW, baseH);
+    const rgbaFiltered = indexedToRgba(indexed);
 
     // 3) Upscale + JPEG encode (fixed preview always 4×)
     const s = 4;
@@ -105,10 +109,12 @@ async function fetchThumb() {
       for (let x = 0; x < w2; x++) {
         const srcX = Math.floor(x / s);
         const i4 = (srcY * baseW + srcX) * 4;
+        // беремо з відфільтрованого RGBA
+        const i4src = i4;
         const i3 = (y * w2 + x) * 3;
-        outBuf[i3] = rgba[i4];
-        outBuf[i3 + 1] = rgba[i4 + 1];
-        outBuf[i3 + 2] = rgba[i4 + 2];
+        outBuf[i3] = rgbaFiltered[i4src];
+        outBuf[i3 + 1] = rgbaFiltered[i4src + 1];
+        outBuf[i3 + 2] = rgbaFiltered[i4src + 2];
       }
     }
     const rgbData = await imaging.createImageDataFromBuffer(outBuf, {
@@ -164,21 +170,9 @@ async function updatePreview() {
   }
 }
 
-// mapPalIndex: finds nearest index 0…14 in ZX_PALETTE
-function mapPalIndex(rgb) {
-  let best = 0, bd = Infinity;
-  ZX_PALETTE.forEach((p,i) => {
-    const dr = p.rgb[0]-rgb[0],
-          dg = p.rgb[1]-rgb[1],
-          db = p.rgb[2]-rgb[2];
-    const d = dr*dr + dg*dg + db*db;
-    if (d < bd) { bd = d; best = i; }
-  });
-  return best;
-}
 
 async function saveSCR() {
-  let pixelData, W, H;
+  let indexed, W, H;
 
   await core.executeAsModal(
     async () => {
@@ -188,8 +182,7 @@ async function saveSCR() {
 
       // Отримуємо RGBA-пікселі через утиліту
       const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
-      pixelData = rgba;
-      zxFilter(pixelData, W, H);
+      indexed = zxFilter(rgba, W, H);
     },
     { commandName: "Fetch & Filter Pixels" }
   );
@@ -200,22 +193,7 @@ async function saveSCR() {
 
   for (let by = 0; by < rows; by++) {
     for (let bx = 0; bx < cols; bx++) {
-      // collect frequencies
-      const freq = new Map();
-      for (let dy = 0; dy < 8; dy++) {
-        const y = by*8 + dy;
-        for (let dx = 0; dx < 8; dx++) {
-          const x = bx*8 + dx;
-          const i4 = (y * W + x) * 4;
-          const key = `${pixelData[i4]},${pixelData[i4+1]},${pixelData[i4+2]}`;
-          freq.set(key, (freq.get(key)||0) + 1);
-        }
-      }
-      const sorted = [...freq.entries()].sort((a,b)=>b[1]-a[1]);
-      const inkKey   = sorted[0][0];
-      const paperKey = (sorted[1] || [inkKey])[0];
-      const inkRgb   = inkKey.split(",").map(Number);
-      const paperRgb = paperKey.split(",").map(Number);
+      const attr = indexed.attrs[by*cols + bx];
 
       // bitplane
       for (let dy = 0; dy < 8; dy++) {
@@ -227,24 +205,15 @@ async function saveSCR() {
         let byte = 0;
         for (let bit = 0; bit < 8; bit++) {
           const x = bx*8 + bit;
-          const i4 = (y * W + x) * 4;
-          const matchInk = 
-            pixelData[i4]   === inkRgb[0] &&
-            pixelData[i4+1] === inkRgb[1] &&
-            pixelData[i4+2] === inkRgb[2];
-          byte |= (matchInk ? 1 : 0) << (7 - bit);
+          const idx = indexed.pixels[y*W + x];
+          byte |= (idx === attr.ink ? 1 : 0) << (7 - bit);
         }
         scrBytes[baseAddr] = byte;
       }
 
       // attribute
-      const rawInkIdx   = mapPalIndex(inkRgb);
-      const rawPaperIdx = mapPalIndex(paperRgb);
-      const inkIdx   = rawInkIdx   < 8 ? rawInkIdx   : rawInkIdx   - 7;
-      const paperIdx = rawPaperIdx < 8 ? rawPaperIdx : rawPaperIdx - 7;
-      const bright   = brightMode === "on" ? 1 : 0;
       const attrAddr = 6144 + by*cols + bx;
-      scrBytes[attrAddr] = (bright<<6)|(paperIdx<<3)|inkIdx;
+      scrBytes[attrAddr] = ((attr.flash?1:0)<<7)|((attr.bright?1:0)<<6)|((attr.paper&7)<<3)|(attr.ink&7);
     }
   }
 
