@@ -95,8 +95,8 @@ async function fetchThumb() {
     // 2) Фільтруємо
     zxFilter(rgba, baseW, baseH);
 
-    // 3) Upscale + JPEG encode (як у вас було)
-    const s = scale;
+    // 3) Upscale + JPEG encode (fixed preview always 4×)
+    const s = 4;
     const w2 = baseW * s;
     const h2 = baseH * s;
     const outBuf = new Uint8Array(w2 * h2 * 3);
@@ -144,15 +144,19 @@ async function updatePreview() {
     msg.classList.add("hidden");
 
     const thumb = await fetchThumb();
-    if (!thumb || thumb.b64 === prevB64) return;
-    prevB64 = thumb.b64;
-    lastW = thumb.w;
-    lastH = thumb.h;
+    if (!thumb) return;
 
-    img.src = "data:image/jpeg;base64," + thumb.b64;
+    if (thumb.b64 !== prevB64) {
+      prevB64 = thumb.b64;
+      lastW = thumb.w;
+      lastH = thumb.h;
+      img.src = "data:image/jpeg;base64," + thumb.b64;
+    }
+
     const sysScale = parseFloat(selSys.value) || 1;
-    img.style.width = lastW / sysScale + "px";
-    img.style.height = lastH / sysScale + "px";
+    const s = getScale();
+    img.style.width = (lastW * s / 4) / sysScale + "px";
+    img.style.height = (lastH * s / 4) / sysScale + "px";
   } catch (e) {
     console.error(e);
   } finally {
