@@ -144,12 +144,15 @@ async function updatePreview() {
     msg.classList.add("hidden");
 
     const thumb = await fetchThumb();
-    if (!thumb || thumb.b64 === prevB64) return;
-    prevB64 = thumb.b64;
-    lastW = thumb.w;
-    lastH = thumb.h;
+    if (!thumb) return;
 
-    img.src = "data:image/jpeg;base64," + thumb.b64;
+    if (thumb.b64 !== prevB64) {
+      prevB64 = thumb.b64;
+      lastW = thumb.w;
+      lastH = thumb.h;
+      img.src = "data:image/jpeg;base64," + thumb.b64;
+    }
+
     const sysScale = parseFloat(selSys.value) || 1;
     const s = getScale();
     img.style.width = (lastW * s / 4) / sysScale + "px";
