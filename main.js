@@ -118,7 +118,7 @@ async function fetchThumb() {
       imageData: rgbData,
       base64: true,
       format: "jpg",
-      quality: 0.9,
+      quality: 1.0,
     });
     rgbData.dispose();
 
@@ -150,7 +150,7 @@ async function updatePreview() {
     lastH = thumb.h;
 
     img.src = "data:image/jpeg;base64," + thumb.b64;
-    const sysScale = parseFloat(selSys.value) || 1;
+    const sysScale = parseInt(selSys.value) || 1;
     img.style.width = lastW / sysScale + "px";
     img.style.height = lastH / sysScale + "px";
   } catch (e) {
