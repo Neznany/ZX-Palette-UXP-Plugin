@@ -1,3 +1,26 @@
+// ——— Checkerboard 2x1 Dithering ———
+/**
+ * Checkerboard 2x1 dithering (чергування пікселів у шаховому порядку 2x1)
+ * t ∈ [0,1]: 0 — простий поріг, 1 — повний патерн
+ * @param {Uint8Array|Float32Array} channel
+ * @param {number} w
+ * @param {number} h
+ * @param {number} t
+ */
+function ditherCheckerboard2x1(channel, w, h, t) {
+  t *= 0.6; // зменшуємо діапазон t для більш м'якого ефекту
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      const vNorm = channel[idx] / 255;
+      // checker: 0 для "чорних" клітин, 1 для "білих"
+      const checker = (x + y) % 2 === 0 ? 0 : 1;
+      // t=0: поріг 0.5, t=1: checker 0 або 1
+      const thr = (1 - t) * 0.5 + t * checker;
+      channel[idx] = vNorm > thr ? 255 : 0;
+    }
+  }
+}
 // 8×8 Bayer pattern (0…63)
 const BAYER8 = [
   [0, 32, 8, 40, 2, 34, 10, 42],
@@ -38,25 +61,117 @@ function ditherBayer(channel, w, h, t) {
   }
 }
 
-// ——— Dot Diffusion (4×4 класова матриця) ———
-const DOT_CLASS = [
+// ——— Bayer 4x4 ———
+const BAYER4 = [
   [0, 8, 2, 10],
   [12, 4, 14, 6],
   [3, 11, 1, 9],
   [15, 7, 13, 5],
 ];
-function ditherDotDiffusion(channel, w, h, t) {
+function ditherBayer4(channel, w, h, t) {
+  const N = 4;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      const vNorm = channel[i] / 255;
-      const cls = DOT_CLASS[y % 4][x % 4] / 16;
-      const thr = (1 - t) * 0.5 + t * cls;
-      channel[i] = vNorm > thr ? 255 : 0;
+      const idx = y * w + x;
+      const vNorm = channel[idx] / 255;
+      const m = BAYER4[y % N][x % N] / 16;
+      const thr = (1 - t) * 0.5 + t * m;
+      channel[idx] = vNorm > thr ? 255 : 0;
     }
   }
 }
 
+// ——— Bayer 2x2 ———
+const BAYER2 = [
+  [0, 2],
+  [3, 1],
+];
+function ditherBayer2(channel, w, h, t) {
+  const N = 2;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      const vNorm = channel[idx] / 255;
+      const m = BAYER2[y % N][x % N] / 4;
+      const thr = (1 - t) * 0.5 + t * m;
+      channel[idx] = vNorm > thr ? 255 : 0;
+    }
+  }
+}
+
+// ——— Dot Diffusion (Knuth, 1987, 8x8 class mask) ———
+const DOT_MASK_8 = [
+  [0, 48, 12, 60, 3, 51, 15, 63],
+  [32, 16, 44, 28, 35, 19, 47, 31],
+  [8, 56, 4, 52, 11, 59, 7, 55],
+  [40, 24, 36, 20, 43, 27, 39, 23],
+  [2, 50, 14, 62, 1, 49, 13, 61],
+  [34, 18, 46, 30, 33, 17, 45, 29],
+  [10, 58, 6, 54, 9, 57, 5, 53],
+  [42, 26, 38, 22, 41, 25, 37, 21],
+];
+const DOT_DIFFUSION_NEIGHBORS = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+  [-1, -1],
+  [1, 1],
+  [-1, 1],
+  [1, -1],
+];
+function ditherDotDiffusionTrue(channel, w, h, t) {
+  const N = 8;
+  const classMap = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) classMap[y * w + x] = DOT_MASK_8[y % N][x % N];
+
+  // Створюємо float-буфер для накопичення помилки
+  const buf = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) buf[i] = channel[i];
+
+  if (t <= 0) {
+    // t=0: простий поріг 0.5, без дифузії
+    for (let i = 0; i < w * h; i++) channel[i] = channel[i] > 127 ? 255 : 0;
+    return;
+  }
+  // t>0: класичний Dot Diffusion
+  for (let c = 0; c < 64; c++) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (classMap[y * w + x] !== c) continue;
+        const idx = y * w + x;
+        const vNorm = buf[idx] / 255;
+        // t=1: класичний Knuth (c/64), t<1: плавний перехід
+        const thr = (1 - t) * 0.5 + t * (c / 64);
+        const newV = vNorm > thr ? 1 : 0;
+        const err = vNorm - newV;
+        buf[idx] = newV * 255;
+        // Розсіюємо помилку тільки на сусідів з більшим класом
+        let nCount = 0;
+        const nIdxs = [];
+        for (const [dx, dy] of DOT_DIFFUSION_NEIGHBORS) {
+          const nx = x + dx,
+            ny = y + dy;
+          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+          const nidx = ny * w + nx;
+          if (classMap[nidx] > c) {
+            nCount++;
+            nIdxs.push(nidx);
+          }
+        }
+        if (nCount > 0) {
+          const errPortion = (err * 255) / nCount;
+          for (const nidx of nIdxs) {
+            buf[nidx] += errPortion;
+          }
+        }
+      }
+    }
+  }
+  // Копіюємо результат у вихідний канал
+  for (let i = 0; i < w * h; i++) channel[i] = buf[i] > 127 ? 255 : 0;
+}
 
 // ——— Floyd–Steinberg (FS) ———
 function ditherFS(channel, w, h, t) {
@@ -318,7 +433,6 @@ function ditherBurkes(channel, w, h, t) {
   }
 }
 
-
 // ——— Clustered Ordered Dithering (4×4) ———
 const CLUSTER_MASK = [
   [0, 2, 3, 1],
@@ -348,17 +462,16 @@ function ditherRandomThreshold(channel, w, h, t) {
   }
 }
 
-
 // 7x7 multi-level diagonal pattern (8 градацій, як на зразку)
 // Кожне число — "поріг" для появи діагональної лінії (0…7)
 const THRESHOLD7 = [
-  [0,5,3,1,6,4,2],
-  [5,3,1,6,4,2,0],
-  [3,1,6,4,2,0,5],
-  [1,6,4,2,0,5,3],
-  [6,4,2,0,5,3,1],
-  [4,2,0,5,3,1,6],
-  [2,0,5,3,1,6,4],
+  [0, 5, 3, 1, 6, 4, 2],
+  [5, 3, 1, 6, 4, 2, 0],
+  [3, 1, 6, 4, 2, 0, 5],
+  [1, 6, 4, 2, 0, 5, 3],
+  [6, 4, 2, 0, 5, 3, 1],
+  [4, 2, 0, 5, 3, 1, 6],
+  [2, 0, 5, 3, 1, 6, 4],
 ];
 
 /**
@@ -369,33 +482,36 @@ const THRESHOLD7 = [
  * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
  */
 function ditherLineDiag7x7(channel, w, h, t) {
-  t *= .95; // зменшуємо t, щоб поріг не був занадто високим
-  const N =6;             // max поріг
-  const mid = 255 / 2;      // базовий поріг при t=0
+  t *= 0.95; // зменшуємо t, щоб поріг не був занадто високим
+  const N = 6; // max поріг
+  const mid = 255 / 2; // базовий поріг при t=0
   for (let y = 0; y < h; y++) {
     const row = y % 7;
     const base = y * w;
     for (let x = 0; x < w; x++) {
-      const idx      = base + x;
-      const v        = channel[idx];
-      const thrPat   = (THRESHOLD7[row][x % 7] / N) * 255;
-      const thr      = mid * (1 - t) + thrPat * t;
-      channel[idx]   = v > thr ? 255 : 0;
+      const idx = base + x;
+      const v = channel[idx];
+      const thrPat = (THRESHOLD7[row][x % 7] / N) * 255;
+      const thr = mid * (1 - t) + thrPat * t;
+      channel[idx] = v > thr ? 255 : 0;
     }
   }
 }
 
 module.exports = {
-  fs:            ditherFS,
-  jjn:           ditherJJN,
-  sierra3:       ditherSierra3,
-  stucki:        ditherStucki,
-  burkes:        ditherBurkes,
-  atkinson:      ditherAtkinson,
-  bayer:         ditherBayer,
-  bluenoise:     ditherBlueNoise,
-  dot:           ditherDotDiffusion,
-  clustered:     ditherClustered,
-  random:        ditherRandomThreshold,
-  linediag7x7:   ditherLineDiag7x7
+  fs: ditherFS,
+  jjn: ditherJJN,
+  sierra3: ditherSierra3,
+  stucki: ditherStucki,
+  burkes: ditherBurkes,
+  atkinson: ditherAtkinson,
+  bayer: ditherBayer,
+  bayer4: ditherBayer4,
+  bayer2: ditherBayer2,
+  bluenoise: ditherBlueNoise,
+  // dotdiff:       ditherDotDiffusionTrue,
+  clustered: ditherClustered,
+  random: ditherRandomThreshold,
+  linediag7x7: ditherLineDiag7x7,
+  checker2x1: ditherCheckerboard2x1,
 };

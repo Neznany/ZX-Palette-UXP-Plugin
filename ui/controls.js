@@ -1,6 +1,6 @@
 // src/ui/controls.js
 const { app, imaging, core } = require("photoshop");
-const { getRgbaPixels } = require("../filters/utils");
+const { getRgbaPixels } = require("../utils/utils");
 
 function getDomElements() {
   return {
@@ -16,6 +16,19 @@ function getDomElements() {
     brightSel: document.getElementById("brightModeSel"),
     saveScrBtn: document.getElementById("saveScrBtn"),
   };
+}
+
+function saveSettings(settings) {
+  try {
+    localStorage.setItem("zx_plugin_settings", JSON.stringify(settings));
+  } catch (e) { /* ignore */ }
+}
+
+function loadSettings() {
+  try {
+    const s = localStorage.getItem("zx_plugin_settings");
+    return s ? JSON.parse(s) : {};
+  } catch (e) { return {}; }
 }
 
 function setupControls({
@@ -43,21 +56,56 @@ function setupControls({
     saveScrBtn,
   } = getDomElements();
 
+  // Відновлення налаштувань при старті
+  const settings = loadSettings();
+  if (settings.scalePreview) {
+    setScale(settings.scalePreview);
+    lblScale.textContent = settings.scalePreview + "x";
+  }
+  if (settings.systemScale && selSys) selSys.value = settings.systemScale;
+  if (settings.ditherAlg && selAlg) selAlg.value = settings.ditherAlg;
+  if (settings.brightMode && brightSel) brightSel.value = settings.brightMode;
+
+  // Синхронізуємо selectedAlg у main.js з UI після відновлення
+  if (selAlg) setAlgorithm(selAlg.value);
+
   // Helper to update scale label and preview
   function updateScaleLabelAndPreview() {
-    lblScale.textContent = getScale() + "x";
+    const scale = getScale();
+    lblScale.textContent = scale + "x";
+    saveSettings({
+      ...loadSettings(),
+      scalePreview: scale,
+      systemScale: selSys?.value,
+      ditherAlg: selAlg?.value,
+      brightMode: brightSel?.value
+    });
     updatePreview();
   }
 
   // Algorithm selector
   selAlg?.addEventListener("change", () => {
     setAlgorithm(selAlg.value);
+    saveSettings({
+      ...loadSettings(),
+      ditherAlg: selAlg.value,
+      scalePreview: getScale(),
+      systemScale: selSys?.value,
+      brightMode: brightSel?.value
+    });
     updatePreview();
   });
 
   // Bright mode selector
   brightSel?.addEventListener("change", () => {
     setBrightMode(brightSel.value);
+    saveSettings({
+      ...loadSettings(),
+      brightMode: brightSel.value,
+      scalePreview: getScale(),
+      systemScale: selSys?.value,
+      ditherAlg: selAlg?.value
+    });
     updatePreview();
   });
 
@@ -74,7 +122,7 @@ function setupControls({
     updatePreview();
   });
 
-  // Scale controls
+  // Scale Preview controls
   btnDown?.addEventListener("click", () => {
     let s = getScale();
     if (s > 1) setScale(s - 1);
@@ -87,6 +135,7 @@ function setupControls({
     updateScaleLabelAndPreview();
   });
 
+  // system Scale selector
   selSys?.addEventListener("change", () => {
     const { lastW, lastH } = getLastDimensions();
     if (lastW && lastH) {
@@ -94,6 +143,13 @@ function setupControls({
       img.style.width = lastW / ss + "px";
       img.style.height = lastH / ss + "px";
     }
+    saveSettings({
+      ...loadSettings(),
+      systemScale: selSys.value,
+      scalePreview: getScale(),
+      ditherAlg: selAlg?.value,
+      brightMode: brightSel?.value
+    });
     updatePreview();
   });
 
@@ -102,11 +158,13 @@ function setupControls({
     btnApply.disabled = true;
     try {
       await core.executeAsModal(async () => {
+        console.log("Applying");
         const d = app.activeDocument;
         const W = Math.round(+d.width);
         const H = Math.round(+d.height);
         // Отримуємо RGBA через утиліту
-        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
+        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, true);
+        // Застосовуємо фільтр ZX
         zxFilter(rgba, W, H);
         const newData = await imaging.createImageDataFromBuffer(rgba, {
           width: W,
@@ -129,4 +187,5 @@ function setupControls({
   });
 }
 
-module.exports = { setupControls };
+
+module.exports = { setupControls, loadSettings };

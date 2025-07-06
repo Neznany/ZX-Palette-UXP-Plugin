@@ -1,6 +1,6 @@
 // main.js (UXP Plugin Entry)
 const { app, imaging, core, action } = require("photoshop");
-const { setupControls } = require("./ui/controls");
+const { setupControls, loadSettings } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
 const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
@@ -24,9 +24,38 @@ let busy = false;
 let prevB64 = "";
 let lastW = 0,
   lastH = 0;
-let selectedAlg = "linediag7x7"; //dot
+// Initialize selectedAlg from saved settings or fallback to first available
+let selectedAlg = (function() {
+  const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
+  if (settings && settings.ditherAlg) return settings.ditherAlg;
+  const sel = document.getElementById("ditherAlgSel");
+  if (sel && sel.options && sel.options.length > 0) {
+    return sel.options[0].value;
+  }
+  return "fs"; // fallback to Floyd-Steinberg
+})();
 let ditherT = 0.5;
-let brightMode = "on";
+
+// ZX Spectrum “Primary” palette (8 base + bright variants)
+const ZX_BASE = [
+  [0, 0, 0],
+  [0, 0, 192],
+  [192, 0, 0],
+  [192, 0, 192],
+  [0, 192, 0],
+  [0, 192, 192],
+  [192, 192, 0],
+  [192, 192, 192],
+];
+const ZX_PALETTE = [];
+for (let i = 0; i < 8; i++) {
+  ZX_PALETTE.push({ rgb: ZX_BASE[i], bright: false });
+}
+for (let i = 1; i < 8; i++) {
+  // skip black bright
+  const [r, g, b] = ZX_BASE[i].map((v) => (v === 0 ? 0 : 255));
+  ZX_PALETTE.push({ rgb: [r, g, b], bright: true });
+}
 
 function getScale() {
   return scale;

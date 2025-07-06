@@ -114,19 +114,22 @@
 
     <label>
       Dithering
-      <select id="ditherAlgSel">
-        <option value="bayer">Bayer 8×8</option>
-        <option value="dot">Dot diffusion</option>
-        <option value="fs">Floyd–Steinberg</option>
-        <option value="jjn">Jarvis–Judice–Ninke</option>
-        <option value="sierra3">Sierra-3</option>
-        <option value="stucki">Stucki</option>
-        <option value="burkes">Burkes</option>
-        <option value="atkinson">Atkinson</option>
-        <option value="bluenoise">Blue-noise</option>
-        <option value="linediag7x7">Line-diag 7×7</option>
-        <option value="clustered">Clustered ordered</option>
-        <option value="random">Random threshold</option>
+      <select id="ditherAlgSel" style="width: 170px;">
+      <option value="checker2x1">Сheckerboard 2x1</option>
+      <option value="bayer2">Bayer 2×2</option>
+      <option value="bayer4">Bayer 4×4</option>
+      <option value="bayer">Bayer 8×8</option>
+      <!--<option value="dotdiff">Dot diffusion (true)</option>-->
+      <option value="fs">Floyd–Steinberg</option>
+      <option value="jjn">Jarvis–Judice–Ninke</option>
+      <option value="sierra3">Sierra-3</option>
+      <option value="stucki">Stucki</option>
+      <option value="burkes">Burkes</option>
+      <option value="atkinson">Atkinson</option>
+      <option value="bluenoise">Blue-noise</option>
+      <option value="linediag7x7" selected>Line-diag 7×7</option>
+      <option value="clustered">Clustered ordered</option>
+      <option value="random">Random threshold</option>
       </select>
     </label>
 
@@ -136,7 +139,7 @@
       <span id="ditherLabel">50%</span>
     </label>
 
-    <button id="applyBtn">Додати шар</button>
+    <button id="applyBtn">Paste</button>
     <label>
       Bright
       <select id="brightModeSel">
