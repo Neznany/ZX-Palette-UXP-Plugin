@@ -18,6 +18,8 @@ const ZX_BASE = [
     for (let bx = 0; bx < blocksX; bx++) {
       // 1. Рахуємо частоти індексів палітри
       const freq = new Array(8).fill(0);
+      const nearest = new Array(64);
+      let p = 0;
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;
         for (let dx = 0; dx < 8; dx++) {
@@ -30,6 +32,7 @@ const ZX_BASE = [
             if (d < minD) { minD = d; minIdx = pi; }
           }
           freq[minIdx]++;
+          nearest[p++] = minIdx;
         }
       }
       // 2. Два найчастіші індекси
@@ -39,17 +42,13 @@ const ZX_BASE = [
       const idxB = top[1]?.idx ?? idxA;
 
       // 3. Для кожного пікселя — приводимо до найближчого індексом:
+      p = 0;
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;
         for (let dx = 0; dx < 8; dx++) {
           const x = bx * 8 + dx;
           const i = (y * w + x) * 4;
-          let minD = Infinity, minIdx = 0;
-          for (let pi = 0; pi < 8; pi++) {
-            const pal = ZX_BASE[pi];
-            const d = (rgba[i] - pal[0])**2 + (rgba[i+1] - pal[1])**2 + (rgba[i+2] - pal[2])**2;
-            if (d < minD) { minD = d; minIdx = pi; }
-          }
+          const minIdx = nearest[p++];
           // ближчий індекс за абсолютною різницею (по колу — якщо потрібно)
           const dToA = Math.abs(minIdx - idxA);
           const dToB = Math.abs(minIdx - idxB);

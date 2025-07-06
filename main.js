@@ -134,8 +134,8 @@ async function updatePreview() {
     const d = app.activeDocument;
     const docW = Math.round(+d.width),
       docH = Math.round(+d.height);
-    const msg = document.getElementById("msg8");
-    const img = document.getElementById("previewImg");
+
+    // Use cached DOM references
     if (docW % 8 || docH % 8 || docW > 512 || docH > 384) {
       msg.classList.remove("hidden");
       img.src = "";
@@ -150,8 +150,7 @@ async function updatePreview() {
     lastH = thumb.h;
 
     img.src = "data:image/jpeg;base64," + thumb.b64;
-    const sysScale =
-      parseFloat(document.getElementById("sysScaleSel").value) || 1;
+    const sysScale = parseFloat(selSys.value) || 1;
     img.style.width = lastW / sysScale + "px";
     img.style.height = lastH / sysScale + "px";
   } catch (e) {
@@ -258,9 +257,6 @@ action.addNotificationListener(["make", "set", "delete"], () =>
 
 // Ensure DOM is ready before binding UI
 document.addEventListener("DOMContentLoaded", () => {
-  // Get UI elements
-  const img = document.getElementById("previewImg");
-  const msg = document.getElementById("msg8");
 
   setupControls({
     zxFilter,
