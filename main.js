@@ -36,6 +36,13 @@ let selectedAlg = (function() {
 })();
 let ditherT = 0.5;
 
+// Initialize brightMode from saved settings or default to "on"
+let brightMode = (function() {
+  const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
+  if (settings && settings.brightMode) return settings.brightMode;
+  return 'on';
+})();
+
 // ZX Spectrum “Primary” palette (8 base + bright variants)
 const ZX_BASE = [
   [0, 0, 0],
