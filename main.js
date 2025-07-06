@@ -36,7 +36,6 @@ let selectedAlg = (function() {
   return "fs"; // fallback to Floyd-Steinberg
 })();
 let ditherT = 0.5;
-let brightMode = "on";
 
 // Initialize brightMode from saved settings or default to "on"
 let brightMode = (function() {
