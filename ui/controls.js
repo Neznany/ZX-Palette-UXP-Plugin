@@ -174,7 +174,7 @@ function setupControls({
           components: 4,
           colorSpace: "RGB",
         });
-        const lyr = await d.createLayer({ name: "Filtered ZX" });
+        const lyr = await d.createLayer({ name: "Filtered ZX " + selAlg.value });
         await imaging.putPixels({
           layerID: lyr.id,
           imageData: newData,

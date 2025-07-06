@@ -223,7 +223,10 @@ async function saveSCR() {
     }
   }
 
-  const file = await fs.getFileForSaving("export.scr");
+  // Отримуємо ім'я активного документа без розширення
+  let docName = app.activeDocument && app.activeDocument.title ? app.activeDocument.title : "export";
+  docName = docName.replace(/\.[^/.]+$/, ""); // видаляємо розширення
+  const file = await fs.getFileForSaving(`${docName}.scr`);
   if (!file) return;
   await file.write(scrBytes.buffer, { format: formats.binary });
 }
