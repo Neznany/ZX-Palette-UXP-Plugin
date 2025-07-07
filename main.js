@@ -4,7 +4,7 @@ const { setupControls, loadSettings } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
 const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
-const { rgbaToIndexed, indexedToRgba } = require("./utils/indexed");
+const { rgbaToIndexed, indexedToRgba, computeBrightAttrs } = require("./utils/indexed");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
@@ -86,10 +86,15 @@ function setBrightMode(v) {
 
 // Core filter
 function zxFilter(rgba, w, h) {
+  let brightBits;
+  if (brightMode === "auto") {
+    const orig = new Uint8Array(rgba);
+    brightBits = computeBrightAttrs(orig, w, h);
+  }
   ditherSeparateChannels(rgba, w, h, selectedAlg, ditherT);
   reduceToDominantPair(rgba, w, h);
   const bright = brightMode === "on" ? 1 : 0;
-  return rgbaToIndexed(rgba, w, h, { bright, flash: 0 });
+  return rgbaToIndexed(rgba, w, h, { bright, flash: 0, brightBits });
 }
 
 async function fetchThumb() {
