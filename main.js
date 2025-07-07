@@ -2,7 +2,6 @@
 const { app, imaging, core, action } = require("photoshop");
 const { setupControls, loadSettings } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
-const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
 const { rgbaToIndexed, indexedToRgba, computeBrightAttrs } = require("./utils/indexed");
 const { encodeTiles } = require("./utils/scr");
@@ -38,33 +37,12 @@ let selectedAlg = (function() {
 })();
 let ditherT = 0.5;
 
-// Initialize brightMode from saved settings or default to "auto"
+// Initialize brightMode from saved settings or default to "on"
 let brightMode = (function() {
   const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
   if (settings && settings.brightMode) return settings.brightMode;
-  return 'auto'; // default to 'auto'
+  return 'on'; // default to 'on'
 })();
-
-// ZX Spectrum “Primary” palette (8 base + bright variants)
-const ZX_BASE = [
-  [0, 0, 0],
-  [0, 0, 192],
-  [192, 0, 0],
-  [192, 0, 192],
-  [0, 192, 0],
-  [0, 192, 192],
-  [192, 192, 0],
-  [192, 192, 192],
-];
-const ZX_PALETTE = [];
-for (let i = 0; i < 8; i++) {
-  ZX_PALETTE.push({ rgb: ZX_BASE[i], bright: false });
-}
-for (let i = 1; i < 8; i++) {
-  // skip black bright
-  const [r, g, b] = ZX_BASE[i].map((v) => (v === 0 ? 0 : 255));
-  ZX_PALETTE.push({ rgb: [r, g, b], bright: true });
-}
 
 function getScale() {
   return scale;
