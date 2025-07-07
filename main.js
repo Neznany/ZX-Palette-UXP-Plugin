@@ -5,6 +5,7 @@ const { reduceToDominantPair } = require("./filters/reduce");
 const { saturate100 } = require("./filters/saturate");
 const { ditherSeparateChannels } = require("./filters/dither");
 const { rgbaToIndexed, indexedToRgba, computeBrightAttrs } = require("./utils/indexed");
+const { encodeTiles } = require("./utils/scr");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
@@ -198,42 +199,24 @@ async function saveSCR() {
     { commandName: "Fetch & Filter Pixels" }
   );
 
-  const scrBytes  = new Uint8Array(6912);
-  scrBytes.fill(0);
-  const cols = W >> 3, rows = H >> 3;
-
-  for (let by = 0; by < rows; by++) {
-    for (let bx = 0; bx < cols; bx++) {
-      const attr = indexed.attrs[by*cols + bx];
-
-      // bitplane
-      for (let dy = 0; dy < 8; dy++) {
-        const y = by*8 + dy;
-        const bankOffset = (y & 0xC0) << 5;
-        const rowOffset  = (y & 0x38) << 2;
-        const lineOffset = (y & 0x07) << 8;
-        const baseAddr   = bankOffset | rowOffset | lineOffset | bx;
-        let byte = 0;
-        for (let bit = 0; bit < 8; bit++) {
-          const x = bx*8 + bit;
-          const idx = indexed.pixels[y*W + x];
-          byte |= (idx === attr.ink ? 1 : 0) << (7 - bit);
-        }
-        scrBytes[baseAddr] = byte;
-      }
-
-      // attribute
-      const attrAddr = 6144 + by*cols + bx;
-      scrBytes[attrAddr] = ((attr.flash?1:0)<<7)|((attr.bright?1:0)<<6)|((attr.paper&7)<<3)|(attr.ink&7);
-    }
-  }
+  const tiles = encodeTiles(indexed);
 
   // Отримуємо ім'я активного документа без розширення
   let docName = app.activeDocument && app.activeDocument.title ? app.activeDocument.title : "export";
   docName = docName.replace(/\.[^/.]+$/, ""); // видаляємо розширення
-  const file = await fs.getFileForSaving(`${docName}.scr`);
-  if (!file) return;
-  await file.write(scrBytes.buffer, { format: formats.binary });
+
+  if (tiles.length === 1) {
+    const file = await fs.getFileForSaving(`${docName}.scr`);
+    if (!file) return;
+    await file.write(tiles[0].bytes.buffer, { format: formats.binary });
+  } else {
+    const folder = await fs.getFolder();
+    if (!folder) return;
+    for (const t of tiles) {
+      const file = await folder.createFile(`${docName}_${t.tx}_${t.ty}.scr`, { overwrite: true });
+      await file.write(t.bytes.buffer, { format: formats.binary });
+    }
+  }
 }
 
 
