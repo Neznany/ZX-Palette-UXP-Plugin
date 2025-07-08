@@ -3,7 +3,6 @@ const { app, imaging, core } = require("photoshop");
 const { getRgbaPixels, ensureFlashLayer } = require("../utils/utils");
 const { indexedToRgba } = require("../utils/indexed");
 
-
 function getDomElements() {
   return {
     btnDown: document.getElementById("scaleDown"),

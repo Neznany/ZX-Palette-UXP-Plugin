@@ -11,7 +11,7 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-      background: #1c1c1c;
+      background: #444;
       color: #ddd;
       font-family: sans-serif;
     }
@@ -37,8 +37,8 @@
     #previewWrapper {
       flex: 1 1 auto;
       overflow: auto;
-      border: 1px solid #777;
-      margin: 12px;
+      border: none;
+      margin: 2px;
       background: #000;
       /* optional frame background */
       display: flex;
@@ -59,23 +59,24 @@
     /* Controls pinned at bottom */
     #controls {
       flex: 0 0 auto;
-      padding: 12px;
+      padding: 2px 8px;
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 4px;
       align-items: center;
       border-top: 1px solid #999;
-      background: #444;
+      background: #555;
     }
 
     button,
     select {
       font: inherit;
-      padding: 4px 8px;
+      padding: 1px 2px;
+      margin: 4px 8px;
       border-radius: 4px;
-      background: #333;
+      background: #444;
       color: #ddd;
-      border: none;
+      border: 1px solid #666;
       cursor: pointer;
     }
 

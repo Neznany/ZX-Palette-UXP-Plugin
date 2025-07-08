@@ -74,7 +74,6 @@ function setFlashEnabled(v) {
   flashEnabled = !!v;
 }
 
-
 function applyFlashAttrs(indexed, flashRgba, w, h) {
   const cols = w >> 3;
   const rows = h >> 3;
