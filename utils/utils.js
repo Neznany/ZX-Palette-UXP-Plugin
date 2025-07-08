@@ -8,12 +8,14 @@
  * @returns {Promise<{rgba: Uint8Array, width: number, height: number}>}
  */
 async function getRgbaPixels(imaging, options, applyAlpha = true) {
-  const { left, top, width, height } = options;
-  const { imageData } = await imaging.getPixels({
+  const { left, top, width, height, layerID } = options;
+  const getOpts = {
     sourceBounds: { left, top, width, height },
     targetSize: { width, height },
     applyAlpha,
-  });
+  };
+  if (layerID !== undefined) getOpts.layerID = layerID;
+  const { imageData } = await imaging.getPixels(getOpts);
   const data = await imageData.getData();
   imageData.dispose();
   const pxCount = width * height;
