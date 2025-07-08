@@ -1,7 +1,8 @@
 // src/ui/controls.js
 const { app, imaging, core } = require("photoshop");
-const { getRgbaPixels } = require("../utils/utils");
+const { getRgbaPixels, ensureFlashLayer } = require("../utils/utils");
 const { indexedToRgba } = require("../utils/indexed");
+
 
 function getDomElements() {
   return {
@@ -15,6 +16,7 @@ function getDomElements() {
     rngStr: document.getElementById("ditherStrength"),
     lblStr: document.getElementById("ditherLabel"),
     brightSel: document.getElementById("brightModeSel"),
+    flashChk: document.getElementById("flashChk"),
     saveScrBtn: document.getElementById("saveScrBtn"),
   };
 }
@@ -41,6 +43,7 @@ function setupControls({
   setAlgorithm,
   setDitherStrength,
   setBrightMode,
+  setFlashEnabled,
   saveSCR,
 }) {
   const {
@@ -54,6 +57,7 @@ function setupControls({
     rngStr,
     lblStr,
     brightSel,
+    flashChk,
     saveScrBtn,
   } = getDomElements();
 
@@ -66,6 +70,10 @@ function setupControls({
   if (settings.systemScale && selSys) selSys.value = settings.systemScale;
   if (settings.ditherAlg && selAlg) selAlg.value = settings.ditherAlg;
   if (settings.brightMode && brightSel) brightSel.value = settings.brightMode;
+  if (typeof settings.flashEnabled === 'boolean' && flashChk) {
+    flashChk.checked = settings.flashEnabled;
+    setFlashEnabled(flashChk.checked);
+  }
 
   // Синхронізуємо selectedAlg у main.js з UI після відновлення
   if (selAlg) setAlgorithm(selAlg.value);
@@ -79,7 +87,8 @@ function setupControls({
       scalePreview: scale,
       systemScale: selSys?.value,
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value
+      brightMode: brightSel?.value,
+      flashEnabled: flashChk?.checked
     });
     updatePreview();
   }
@@ -92,7 +101,8 @@ function setupControls({
       ditherAlg: selAlg.value,
       scalePreview: getScale(),
       systemScale: selSys?.value,
-      brightMode: brightSel?.value
+      brightMode: brightSel?.value,
+      flashEnabled: flashChk?.checked
     });
     updatePreview();
   });
@@ -105,7 +115,21 @@ function setupControls({
       brightMode: brightSel.value,
       scalePreview: getScale(),
       systemScale: selSys?.value,
-      ditherAlg: selAlg?.value
+      ditherAlg: selAlg?.value,
+      flashEnabled: flashChk?.checked
+    });
+    updatePreview();
+  });
+
+  flashChk?.addEventListener("change", () => {
+    setFlashEnabled(flashChk.checked);
+    saveSettings({
+      ...loadSettings(),
+      flashEnabled: flashChk.checked,
+      scalePreview: getScale(),
+      systemScale: selSys?.value,
+      ditherAlg: selAlg?.value,
+      brightMode: brightSel?.value
     });
     updatePreview();
   });
@@ -149,7 +173,8 @@ function setupControls({
       systemScale: selSys.value,
       scalePreview: getScale(),
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value
+      brightMode: brightSel?.value,
+      flashEnabled: flashChk?.checked
     });
     updatePreview();
   });
@@ -164,10 +189,20 @@ function setupControls({
         const W = Math.round(+d.width);
         const H = Math.round(+d.height);
         // Отримуємо RGBA через утиліту
-        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, true);
+        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
+        let flashRgba = null;
+        if (flashChk?.checked) {
+          const flashLayer = await ensureFlashLayer(d, imaging);
+          try {
+            const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
+            flashRgba = fr.rgba;
+          } catch (e) {
+            console.warn("FLASH layer empty");
+          }
+        }
         // Застосовуємо фільтр ZX
-        const indexed = zxFilter(rgba, W, H);
-        const outRgba = indexedToRgba(indexed);
+        const indexed = zxFilter(rgba, W, H, flashRgba);
+        const outRgba = indexedToRgba(indexed, false);
         const newData = await imaging.createImageDataFromBuffer(outRgba, {
           width: W,
           height: H,

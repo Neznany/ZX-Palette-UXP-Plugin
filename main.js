@@ -3,12 +3,12 @@ const { app, imaging, core, action } = require("photoshop");
 const { setupControls, loadSettings } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
 const { ditherSeparateChannels } = require("./filters/dither");
-const { rgbaToIndexed, indexedToRgba, computeBrightAttrs } = require("./utils/indexed");
+const { rgbaToIndexed, indexedToRgba, computeBrightAttrs, rgbToIndex } = require("./utils/indexed");
 const { encodeTiles } = require("./utils/scr");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
-const { getRgbaPixels } = require("./utils/utils");
+const { getRgbaPixels, ensureFlashLayer } = require("./utils/utils");
 
 // DOM elements
 const img = document.getElementById("previewImg");
@@ -44,6 +44,13 @@ let brightMode = (function() {
   return 'on'; // default to 'on'
 })();
 
+let flashEnabled = (function() {
+  const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
+  return settings && settings.flashEnabled ? true : false;
+})();
+
+let flashPhase = false;
+
 function getScale() {
   return scale;
 }
@@ -63,8 +70,48 @@ function setBrightMode(v) {
   brightMode = v;
 }
 
+function setFlashEnabled(v) {
+  flashEnabled = !!v;
+}
+
+
+function applyFlashAttrs(indexed, flashRgba, w, h) {
+  const cols = w >> 3;
+  const rows = h >> 3;
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      const attr = indexed.attrs[by * cols + bx];
+      let flagged = false;
+      const freq = new Array(8).fill(0);
+      for (let dy = 0; dy < 8; dy++) {
+        const y = by * 8 + dy;
+        for (let dx = 0; dx < 8; dx++) {
+          const x = bx * 8 + dx;
+          const p = (y * w + x) * 4;
+          const a = flashRgba[p + 3];
+          if (a > 127) {
+            flagged = true;
+            if (attr.ink === attr.paper) {
+              const idx = rgbToIndex(flashRgba[p], flashRgba[p + 1], flashRgba[p + 2]);
+              freq[idx]++;
+            }
+          }
+        }
+      }
+      if (flagged) {
+        attr.flash = 1;
+        if (attr.ink === attr.paper) {
+          let best = 0, bestC = -1;
+          for (let i = 0; i < 8; i++) if (freq[i] > bestC) { bestC = freq[i]; best = i; }
+          attr.ink = best;
+        }
+      }
+    }
+  }
+}
+
 // Core filter
-function zxFilter(rgba, w, h) {
+function zxFilter(rgba, w, h, flashRgba = null) {
   let brightBits;
   if (brightMode === "auto") {
     const orig = new Uint8Array(rgba);
@@ -73,7 +120,9 @@ function zxFilter(rgba, w, h) {
   ditherSeparateChannels(rgba, w, h, selectedAlg, ditherT);
   reduceToDominantPair(rgba, w, h);
   const bright = brightMode === "on" ? 1 : 0;
-  return rgbaToIndexed(rgba, w, h, { bright, flash: 0, brightBits });
+  const indexed = rgbaToIndexed(rgba, w, h, { bright, flash: 0, brightBits });
+  if (flashEnabled && flashRgba) applyFlashAttrs(indexed, flashRgba, w, h);
+  return indexed;
 }
 
 async function fetchThumb() {
@@ -85,9 +134,20 @@ async function fetchThumb() {
     // 1) Отримуємо RGBA-пікселі через утиліту
     const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH }, false);
 
+    let flashRgba = null;
+    if (flashEnabled) {
+      const flashLayer = await ensureFlashLayer(d, imaging);
+      try {
+        const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
+        flashRgba = fr.rgba;
+      } catch (e) {
+        console.warn("FLASH layer empty");
+      }
+    }
+
     // 2) Фільтруємо та отримуємо індексований буфер
-    const indexed = zxFilter(rgba, baseW, baseH);
-    const rgbaFiltered = indexedToRgba(indexed);
+    const indexed = zxFilter(rgba, baseW, baseH, flashRgba);
+    const rgbaFiltered = indexedToRgba(indexed, flashPhase && flashEnabled);
 
     // 3) Upscale + JPEG encode (fixed preview always 4×)
     const s = 4;
@@ -172,7 +232,17 @@ async function saveSCR() {
 
       // Отримуємо RGBA-пікселі через утиліту
       const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
-      indexed = zxFilter(rgba, W, H);
+      let flashRgba = null;
+      if (flashEnabled) {
+        const flashLayer = await ensureFlashLayer(doc, imaging);
+        try {
+          const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
+          flashRgba = fr.rgba;
+        } catch (e) {
+          console.warn("FLASH layer empty");
+        }
+      }
+      indexed = zxFilter(rgba, W, H, flashRgba);
     },
     { commandName: "Fetch & Filter Pixels" }
   );
@@ -214,7 +284,8 @@ document.addEventListener("DOMContentLoaded", () => {
     getLastDimensions,
     setAlgorithm,
     setDitherStrength,
-    setBrightMode, // ← новий сеттер
+    setBrightMode,
+    setFlashEnabled,
     saveSCR, // ← функція експорту
   });
 
@@ -223,6 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Fallback interval
   setInterval(() => {
+    if (flashEnabled) flashPhase = !flashPhase;
     if (!updatePreview._running) updatePreview();
   }, 500);
 });
