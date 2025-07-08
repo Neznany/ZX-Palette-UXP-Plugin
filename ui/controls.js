@@ -1,18 +1,7 @@
 // src/ui/controls.js
 const { app, imaging, core } = require("photoshop");
-const { getRgbaPixels } = require("../utils/utils");
+const { getRgbaPixels, ensureFlashLayer } = require("../utils/utils");
 const { indexedToRgba } = require("../utils/indexed");
-
-function findLayerByName(layers, name) {
-  for (const layer of layers) {
-    if (layer.name === name) return layer;
-    if (layer.layers && layer.layers.length) {
-      const found = findLayerByName(layer.layers, name);
-      if (found) return found;
-    }
-  }
-  return null;
-}
 
 function getDomElements() {
   return {
@@ -202,8 +191,7 @@ function setupControls({
         const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
         let flashRgba = null;
         if (flashChk?.checked) {
-          let flashLayer = findLayerByName(d.layers, "FLASH");
-          if (!flashLayer) flashLayer = await d.createLayer({ name: "FLASH" });
+          const flashLayer = await ensureFlashLayer(d, imaging);
           try {
             const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
             flashRgba = fr.rgba;

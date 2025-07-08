@@ -8,7 +8,7 @@ const { encodeTiles } = require("./utils/scr");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
-const { getRgbaPixels } = require("./utils/utils");
+const { getRgbaPixels, ensureFlashLayer } = require("./utils/utils");
 
 // DOM elements
 const img = document.getElementById("previewImg");
@@ -74,17 +74,6 @@ function setFlashEnabled(v) {
   flashEnabled = !!v;
 }
 
-function findLayerByName(layers, name) {
-  for (const layer of layers) {
-    if (layer.name === name) return layer;
-    if (layer.layers && layer.layers.length) {
-      const found = findLayerByName(layer.layers, name);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
 function applyFlashAttrs(indexed, flashRgba, w, h) {
   const cols = w >> 3;
   const rows = h >> 3;
@@ -146,8 +135,7 @@ async function fetchThumb() {
 
     let flashRgba = null;
     if (flashEnabled) {
-      let flashLayer = findLayerByName(d.layers, "FLASH");
-      if (!flashLayer) flashLayer = await d.createLayer({ name: "FLASH" });
+      const flashLayer = await ensureFlashLayer(d, imaging);
       try {
         const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
         flashRgba = fr.rgba;
@@ -245,8 +233,7 @@ async function saveSCR() {
       const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
       let flashRgba = null;
       if (flashEnabled) {
-        let flashLayer = findLayerByName(doc.layers, "FLASH");
-        if (!flashLayer) flashLayer = await doc.createLayer({ name: "FLASH" });
+        const flashLayer = await ensureFlashLayer(doc, imaging);
         try {
           const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
           flashRgba = fr.rgba;
