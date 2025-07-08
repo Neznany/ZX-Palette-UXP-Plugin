@@ -204,8 +204,12 @@ function setupControls({
         if (flashChk?.checked) {
           let flashLayer = findLayerByName(d.layers, "FLASH");
           if (!flashLayer) flashLayer = await d.createLayer({ name: "FLASH" });
-          const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, true);
-          flashRgba = fr.rgba;
+          try {
+            const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, true);
+            flashRgba = fr.rgba;
+          } catch (e) {
+            console.warn("FLASH layer empty");
+          }
         }
         // Застосовуємо фільтр ZX
         const indexed = zxFilter(rgba, W, H, flashRgba);
