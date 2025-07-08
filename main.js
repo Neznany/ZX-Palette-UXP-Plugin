@@ -99,7 +99,7 @@ function applyFlashAttrs(indexed, flashRgba, w, h) {
           const x = bx * 8 + dx;
           const p = (y * w + x) * 4;
           const a = flashRgba[p + 3];
-          if (a < 127) {
+          if (a > 127) {
             flagged = true;
             if (attr.ink === attr.paper) {
               const idx = rgbToIndex(flashRgba[p], flashRgba[p + 1], flashRgba[p + 2]);
@@ -148,8 +148,12 @@ async function fetchThumb() {
     if (flashEnabled) {
       let flashLayer = findLayerByName(d.layers, "FLASH");
       if (!flashLayer) flashLayer = await d.createLayer({ name: "FLASH" });
-      const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, true);
-      flashRgba = fr.rgba;
+      try {
+        const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, true);
+        flashRgba = fr.rgba;
+      } catch (e) {
+        console.warn("FLASH layer empty");
+      }
     }
 
     // 2) Фільтруємо та отримуємо індексований буфер
@@ -243,8 +247,12 @@ async function saveSCR() {
       if (flashEnabled) {
         let flashLayer = findLayerByName(doc.layers, "FLASH");
         if (!flashLayer) flashLayer = await doc.createLayer({ name: "FLASH" });
-        const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, true);
-        flashRgba = fr.rgba;
+        try {
+          const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, true);
+          flashRgba = fr.rgba;
+        } catch (e) {
+          console.warn("FLASH layer empty");
+        }
       }
       indexed = zxFilter(rgba, W, H, flashRgba);
     },
