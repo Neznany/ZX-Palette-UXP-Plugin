@@ -121,7 +121,7 @@ function indexToRgb(idx, bright) {
   return base;
 }
 
-function indexedToRgba({ pixels, attrs, width: w, height: h }) {
+function indexedToRgba({ pixels, attrs, width: w, height: h }, swapFlash = false) {
   const rgba = new Uint8Array(w * h * 4);
   const cols = w >> 3;
   for (let y = 0; y < h; y++) {
@@ -129,7 +129,10 @@ function indexedToRgba({ pixels, attrs, width: w, height: h }) {
     for (let x = 0; x < w; x++) {
       const bx = x >> 3;
       const attr = attrs[by * cols + bx];
-      const idx = pixels[y * w + x];
+      let idx = pixels[y * w + x];
+      if (swapFlash && attr.flash) {
+        if (idx === attr.ink) idx = attr.paper; else if (idx === attr.paper) idx = attr.ink;
+      }
       const [r, g, b] = indexToRgb(idx, attr.bright);
       const p = (y * w + x) * 4;
       rgba[p] = r;
@@ -141,4 +144,4 @@ function indexedToRgba({ pixels, attrs, width: w, height: h }) {
   return rgba;
 }
 
-module.exports = { rgbaToIndexed, indexedToRgba, computeBrightAttrs, ZX_BASE };
+module.exports = { rgbaToIndexed, indexedToRgba, computeBrightAttrs, ZX_BASE, rgbToIndex };
