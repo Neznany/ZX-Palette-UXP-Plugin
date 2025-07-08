@@ -102,10 +102,18 @@ function rgbaToIndexed(rgba, w, h, opts = {}) {
           freq[idx]++;
         }
       }
-      const top = freq.map((count, idx) => ({ count, idx }))
-        .sort((a, b) => b.count - a.count);
-      const ink = top[0].idx;
-      const paper = (top[1] ? top[1].idx : ink);
+      // Знаходимо всі кольори, що зустрічаються в блоці
+      const present = [];
+      for (let i = 0; i < freq.length; i++) {
+        if (freq[i] > 0) present.push(i);
+      }
+      let ink, paper;
+      if (present.length === 1) {
+        ink = paper = present[0];
+      } else {
+        paper = Math.max(...present);
+        ink = Math.min(...present);
+      }
       const blockBright = brightBits ? brightBits[a] : bright;
       attrs[a++] = { ink, paper, bright: blockBright, flash };
     }
