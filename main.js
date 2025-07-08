@@ -149,7 +149,7 @@ async function fetchThumb() {
       let flashLayer = findLayerByName(d.layers, "FLASH");
       if (!flashLayer) flashLayer = await d.createLayer({ name: "FLASH" });
       try {
-        const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, true);
+        const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
         flashRgba = fr.rgba;
       } catch (e) {
         console.warn("FLASH layer empty");
@@ -248,7 +248,7 @@ async function saveSCR() {
         let flashLayer = findLayerByName(doc.layers, "FLASH");
         if (!flashLayer) flashLayer = await doc.createLayer({ name: "FLASH" });
         try {
-          const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, true);
+          const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
           flashRgba = fr.rgba;
         } catch (e) {
           console.warn("FLASH layer empty");

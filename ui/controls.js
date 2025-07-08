@@ -199,13 +199,13 @@ function setupControls({
         const W = Math.round(+d.width);
         const H = Math.round(+d.height);
         // Отримуємо RGBA через утиліту
-        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, true);
+        const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
         let flashRgba = null;
         if (flashChk?.checked) {
           let flashLayer = findLayerByName(d.layers, "FLASH");
           if (!flashLayer) flashLayer = await d.createLayer({ name: "FLASH" });
           try {
-            const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, true);
+            const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
             flashRgba = fr.rgba;
           } catch (e) {
             console.warn("FLASH layer empty");
