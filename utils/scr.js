@@ -26,7 +26,7 @@ function encodeTile(indexed, tx = 0, ty = 0) {
         const rowOffset = (y & 0x38) << 2;
         const lineOffset = (y & 0x07) << 8;
         const baseAddr = bankOffset | rowOffset | lineOffset | bx;
-        if (attr.ink === attr.paper) {
+        if (attr.ink === attr.paper) { // if the block is uniform, fill with zero
           scr[baseAddr] = 0;
           continue;
         }
