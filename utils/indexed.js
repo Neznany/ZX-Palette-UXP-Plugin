@@ -1,24 +1,8 @@
 // utils/indexed.js
 // Conversion between RGBA buffers and ZX Spectrum indexed representation
 
-const ZX_BASE = [
-  [0, 0, 0],
-  [0, 0, 192],
-  [192, 0, 0],
-  [192, 0, 192],
-  [0, 192, 0],
-  [0, 192, 192],
-  [192, 192, 0],
-  [192, 192, 192],
-];
-
-// Helper palette including bright variants (skip bright black)
-const ZX_FULL = [];
-for (let i = 0; i < 8; i++) ZX_FULL.push({ rgb: ZX_BASE[i], bright: false });
-for (let i = 1; i < 8; i++) {
-  const [r, g, b] = ZX_BASE[i].map(v => (v === 0 ? 0 : 255));
-  ZX_FULL.push({ rgb: [r, g, b], bright: true });
-}
+// Import universal palettes
+const { ZX_BASE, ZX_FULL } = require('./palette');
 
 function rgbToIndex(r, g, b) {
   const rBit = r >= 128 ? 1 : 0;
@@ -152,4 +136,11 @@ function indexedToRgba({ pixels, attrs, width: w, height: h }, swapFlash = false
   return rgba;
 }
 
-module.exports = { rgbaToIndexed, indexedToRgba, computeBrightAttrs, ZX_BASE, rgbToIndex };
+module.exports = {
+  rgbaToIndexed,
+  indexedToRgba,
+  computeBrightAttrs,
+  ZX_BASE,
+  ZX_FULL,
+  rgbToIndex,
+};

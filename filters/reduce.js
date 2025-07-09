@@ -1,14 +1,7 @@
+const { ZX_BASE_255 } = require('../utils/palette');
+
 function reduceToDominantPair(rgba, w, h) {
-const ZX_BASE = [
-  [0, 0, 0],
-  [0, 0, 255],
-  [255, 0, 0],
-  [255, 0, 255],
-  [0, 255, 0],
-  [0, 255, 255],
-  [255, 255, 0],
-  [255, 255, 255],
-];
+  const ZX_BASE = ZX_BASE_255;
 
   const blocksX = Math.floor(w / 8);
   const blocksY = Math.floor(h / 8);
@@ -62,5 +55,4 @@ const ZX_BASE = [
     }
   }
 }
-
 module.exports = { reduceToDominantPair };
