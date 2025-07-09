@@ -26,6 +26,10 @@ function encodeTile(indexed, tx = 0, ty = 0) {
         const rowOffset = (y & 0x38) << 2;
         const lineOffset = (y & 0x07) << 8;
         const baseAddr = bankOffset | rowOffset | lineOffset | bx;
+        if (attr.ink === attr.paper) {
+          scr[baseAddr] = 0;
+          continue;
+        }
         let byte = 0;
         for (let bit = 0; bit < 8; bit++) {
           const xGlobal = (startBx + bx) * 8 + bit;
