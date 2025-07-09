@@ -116,21 +116,21 @@
     <label>
       Dithering
       <select id="ditherAlgSel" style="width: 170px;">
-      <option value="checker2x1">Сheckerboard 2x1</option>
-      <option value="bayer2">Bayer 2×2</option>
-      <option value="bayer4">Bayer 4×4</option>
-      <option value="bayer">Bayer 8×8</option>
-      <!--<option value="dotdiff">Dot diffusion (true)</option>-->
-      <option value="fs">Floyd–Steinberg</option>
-      <option value="jjn">Jarvis–Judice–Ninke</option>
-      <option value="sierra3">Sierra-3</option>
-      <option value="stucki">Stucki</option>
-      <option value="burkes">Burkes</option>
-      <option value="atkinson">Atkinson</option>
-      <option value="bluenoise">Blue-noise</option>
-      <option value="linediag7x7" selected>Line-diag 7×7</option>
-      <option value="clustered">Clustered ordered</option>
-      <option value="random">Random threshold</option>
+        <option value="checker2x1">Сheckerboard 2x1</option>
+        <option value="bayer2">Bayer 2×2</option>
+        <option value="bayer4">Bayer 4×4</option>
+        <option value="bayer">Bayer 8×8</option>
+        <!--<option value="dotdiff">Dot diffusion (true)</option>-->
+        <option value="fs">Floyd–Steinberg</option>
+        <option value="jjn">Jarvis–Judice–Ninke</option>
+        <option value="sierra3">Sierra-3</option>
+        <option value="stucki">Stucki</option>
+        <option value="burkes">Burkes</option>
+        <option value="atkinson">Atkinson</option>
+        <option value="bluenoise">Blue-noise</option>
+        <option value="linediag7x7" selected>Line-diag 7×7</option>
+        <option value="clustered">Clustered ordered</option>
+        <option value="random">Random threshold</option>
       </select>
     </label>
 
@@ -149,7 +149,8 @@
         <option value="auto" selected>Auto</option>
       </select>
     </label>
-    <label>
+    <label
+      title="1. To activate the flash bit, put pixels in a layer named FLASH.&#10;2. If a block contains only one color, the second color will be taken from this layer.&#10;3. Hide the FLASH layer so it does not affect the visible result.">
       <input type="checkbox" id="flashChk" /> Flash
     </label>
     <button id="saveScrBtn">Save .scr</button>
@@ -157,4 +158,5 @@
 
   <script src="main.js"></script>
 </body>
+
 </html>
