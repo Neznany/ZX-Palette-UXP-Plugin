@@ -138,34 +138,12 @@ function setupControls({
     saveSCR().catch(console.error);
   });
 
-  // Strength slider with throttled preview updates
-  function throttle(fn, delay) {
-    let last = 0;
-    let timer;
-    return function (...args) {
-      const now = Date.now();
-      const remaining = delay - (now - last);
-      clearTimeout(timer);
-      if (remaining <= 0) {
-        last = now;
-        fn.apply(this, args);
-      } else {
-        timer = setTimeout(() => {
-          last = Date.now();
-          fn.apply(this, args);
-        }, remaining);
-      }
-    };
-  }
-
-  const THROTTLE_MS = 250;
-  const throttledPreview = throttle(updatePreview, THROTTLE_MS);
-
+  // Strength slider
   rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
-    throttledPreview();
+    updatePreview();
   });
 
   // Scale Preview controls
