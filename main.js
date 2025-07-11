@@ -127,6 +127,11 @@ function zxFilter(rgba, w, h, flashRgba = null) {
 async function fetchThumb() {
   const d = app.activeDocument;
   if (!d) return null;
+  // If the host is already in a modal state (e.g. a dialog is open)
+  // skip fetching the preview to avoid errors
+  if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
+    return null;
+  }
   return await core.executeAsModal(async () => {
     const baseW = Math.round(+d.width);
     const baseH = Math.round(+d.height);
