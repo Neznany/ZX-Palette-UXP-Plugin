@@ -214,7 +214,10 @@ function setupControls({
           replace: true,
         });
         newData.dispose();
-      }, { commandName: "Apply ZX Filter" });
+      }, {
+        commandName: "Apply ZX Filter",
+        historyStateInfo: { name: "Apply ZX Filter", target: app.activeDocument }
+      });
     } finally {
       btnApply.disabled = false;
       updatePreview();
