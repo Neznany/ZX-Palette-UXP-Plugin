@@ -125,8 +125,9 @@ function zxFilter(rgba, w, h, flashRgba = null) {
 }
 
 async function fetchThumb() {
+  const d = app.activeDocument;
+  if (!d) return null;
   return await core.executeAsModal(async () => {
-    const d = app.activeDocument;
     const baseW = Math.round(+d.width);
     const baseH = Math.round(+d.height);
 
@@ -187,6 +188,11 @@ async function updatePreview() {
   updatePreview._running = true;
   try {
     const d = app.activeDocument;
+    if (!d) {
+      msg.classList.remove("hidden");
+      img.src = "";
+      return;
+    }
     const docW = Math.round(+d.width),
       docH = Math.round(+d.height);
 
