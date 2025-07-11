@@ -160,6 +160,7 @@ function setupControls({
 
   const THROTTLE_MS = 250;
   const throttledPreview = throttle(updatePreview, THROTTLE_MS);
+
   rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";

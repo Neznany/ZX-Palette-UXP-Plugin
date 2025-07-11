@@ -132,9 +132,10 @@ async function fetchThumb() {
   if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
     return null;
   }
-  return await core.executeAsModal(async () => {
-    const baseW = Math.round(+d.width);
-    const baseH = Math.round(+d.height);
+  try {
+    return await core.executeAsModal(async () => {
+      const baseW = Math.round(+d.width);
+      const baseH = Math.round(+d.height);
 
     // 1) Отримуємо RGBA-пікселі через утиліту
     const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH }, false);
@@ -183,12 +184,25 @@ async function fetchThumb() {
     });
     rgbData.dispose();
 
-    return { b64, w: w2, h: h2 };
-  }, { commandName: "ZX Filter: Fetch Preview Thumb" });
+      return { b64, w: w2, h: h2 };
+    }, { commandName: "ZX Filter: Fetch Preview Thumb" });
+  } catch (err) {
+    // If Photoshop becomes busy between the modal check and executeAsModal,
+    // swallow the error and signal caller to retry later
+    if (err && err.message && /modal/i.test(err.message)) {
+      return null;
+    }
+    throw err;
+  }
 }
 
 
 async function updatePreview() {
+  if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
+    // Photoshop is busy with another modal operation, retry soon
+    setTimeout(updatePreview, 250);
+    return;
+  }
   if (updatePreview._running || busy) return;
   updatePreview._running = true;
   try {
@@ -210,7 +224,13 @@ async function updatePreview() {
     msg.classList.add("hidden");
 
     const thumb = await fetchThumb();
-    if (!thumb) return;
+    if (!thumb) {
+      // Host might be busy; try again shortly
+      if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
+        setTimeout(updatePreview, 250);
+      }
+      return;
+    }
 
     if (thumb.b64 !== prevB64) {
       prevB64 = thumb.b64;
@@ -225,6 +245,9 @@ async function updatePreview() {
     img.style.height = (lastH * s / 4) / sysScale + "px";
   } catch (e) {
     console.error(e);
+    if (e && e.message && /modal/i.test(e.message)) {
+      setTimeout(updatePreview, 250);
+    }
   } finally {
     updatePreview._running = false;
   }
