@@ -26,7 +26,7 @@ let prevB64 = "";
 let lastW = 0,
   lastH = 0;
 // Initialize selectedAlg from saved settings or fallback to first available
-let selectedAlg = (function() {
+let selectedAlg = (function () {
   const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
   if (settings && settings.ditherAlg) return settings.ditherAlg;
   const sel = document.getElementById("ditherAlgSel");
@@ -38,13 +38,13 @@ let selectedAlg = (function() {
 let ditherT = 0.5;
 
 // Initialize brightMode from saved settings or default to "on"
-let brightMode = (function() {
+let brightMode = (function () {
   const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
   if (settings && settings.brightMode) return settings.brightMode;
   return 'on'; // default to 'on'
 })();
 
-let flashEnabled = (function() {
+let flashEnabled = (function () {
   const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
   return settings && settings.flashEnabled ? true : false;
 })();

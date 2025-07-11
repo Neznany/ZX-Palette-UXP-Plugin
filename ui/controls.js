@@ -183,7 +183,6 @@ function setupControls({
     btnApply.disabled = true;
     try {
       await core.executeAsModal(async () => {
-        console.log("Applying");
         const d = app.activeDocument;
         const W = Math.round(+d.width);
         const H = Math.round(+d.height);
