@@ -138,12 +138,26 @@ function setupControls({
     saveSCR().catch(console.error);
   });
 
-  // Strength slider
+  // Strength slider with throttled preview updates
+  let strengthThrottleTs = 0;
+  let strengthTimeout = null;
+  const THROTTLE_MS = 250;
   rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
-    updatePreview();
+
+    const now = Date.now();
+    if (now - strengthThrottleTs > THROTTLE_MS) {
+      strengthThrottleTs = now;
+      updatePreview();
+    } else {
+      clearTimeout(strengthTimeout);
+      strengthTimeout = setTimeout(() => {
+        strengthThrottleTs = Date.now();
+        updatePreview();
+      }, THROTTLE_MS);
+    }
   });
 
   // Scale Preview controls
