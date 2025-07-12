@@ -1,86 +1,275 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head>
-  <meta charset="UTF-8" />
-  <title>ZX Palette</title>
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #444; color: #ddd; font-family: sans-serif; }
-    body { display: flex; flex-direction: column; }
-    #msg8 { background: #c33; color: #fff; padding: 6px 8px; font-size: 12px; text-align: center; }
-    .hidden { display: none; }
-    #previewWrapper { flex: 1 1 auto; overflow: auto; margin: 2px; background: #000; display: flex; align-items: center; justify-content: center; }
-    #previewImg { image-rendering: pixelated; image-rendering: crisp-edges; -ms-interpolation-mode: nearest-neighbor; display: block; border: none; }
-    #controls { flex: 0 0 auto; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-top: 1px solid #777; background: #555; position: relative; }
-    .control-button, .apply-btn, .import-export-btn { width: 32px; height: 32px; background: #4e4e4e; border: 1px solid #6e6e6e; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 4px; cursor: pointer; }
-    .apply-btn { width: 136px; color: #fff; }
-    .import-export-btn { width: 77px; gap: 4px; color: #fff; }
-    .icon { width: 18px; height: 18px; }
-    .scale-label { width: 16px; text-align: center; color: #fff; }
-    .dithering-wrap { display: inline-flex; align-items: center; gap: 4px; }
-    .select-wrapper { position: relative; }
-    .dithering-select { appearance: none; width: 150px; height: 32px; padding: 4px 24px 4px 8px; background: #4e4e4e; border: 1px solid #6e6e6e; border-radius: 4px; color: #fff; }
-    .chevron { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; }
-    .slider-base { position: relative; width: 176px; height: 10px; background: #4e4e4e; border: 1px solid #6e6e6e; border-radius: 4px; }
-    .slider-base input { width: 100%; height: 100%; background: transparent; }
-    .percent-txt { width: 40px; text-align: center; color: #fff; }
-    .import-export { display: inline-flex; flex-direction: column; gap: 8px; }
-    .popup { position: absolute; top: 40px; right: 0; background: #555; border: 1px solid #777; padding: 8px; border-radius: 4px; z-index: 10; }
-  </style>
-</head>
-<body>
-  <div id="msg8" class="hidden">The document size must be a multiple of 8, max 512x384</div>
-  <div id="previewWrapper"><img id="previewImg" src="" alt="Preview" /></div>
-  <div id="controls">
-    <button id="scaleDown" class="control-button" aria-label="Zoom out"><img class="icon" src="ui-v2/img/search-minus-24-outlined.svg" alt="" /></button>
-    <div class="scale-label" id="scaleLabel">3x</div>
-    <button id="scaleUp" class="control-button" aria-label="Zoom in"><img class="icon" src="ui-v2/img/search-plus-24-outlined.svg" alt="" /></button>
-    <div class="options-menu" style="position:relative;">
-      <button id="optionsBtn" class="control-button" aria-label="Options"><img class="icon" src="ui-v2/img/options-24-outlined.svg" alt="" /></button>
-      <div id="sysMenu" class="popup hidden">
-        <div style="margin-bottom:4px;color:#fff;">Your System Scale</div>
-        <select id="sysScaleSel" class="dithering-select" style="width:120px;">
-          <option value="1.00">100%</option>
-          <option value="1.25">125%</option>
-          <option value="1.50" selected>150%</option>
-          <option value="1.75">175%</option>
-          <option value="2.00">200%</option>
-          <option value="2.25">225%</option>
-          <option value="2.50">250%</option>
-        </select>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ZX Palette</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #444;
+        color: #ddd;
+        font-family: "Inter", Helvetica;
+        font-size: 12px;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      #msg8 {
+        background: #c33;
+        color: #fff;
+        padding: 6px 8px;
+        font-size: 12px;
+        text-align: center;
+      }
+      .hidden {
+        display: none;
+      }
+      #previewWrapper {
+        flex: 1 1 auto;
+        overflow: auto;
+        margin: 2px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #previewImg {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        -ms-interpolation-mode: nearest-neighbor;
+        display: block;
+        border: none;
+      }
+      #controls {
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        border-top: 1px solid #777;
+        background: #555;
+        position: relative;
+      }
+      .control-button,
+      .apply-btn,
+      .import-export-btn {
+        width: 32px;
+        height: 32px;
+        background: #4e4e4e;
+        border: 1px solid #6e6e6e;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        cursor: pointer;
+      }
+      .apply-btn {
+        width: 136px;
+        color: #fff;
+      }
+      .import-export-btn {
+        width: 77px;
+        gap: 4px;
+        color: #fff;
+      }
+      .icon {
+        width: 18px;
+        height: 18px;
+      }
+      .scale-label {
+        width: 16px;
+        text-align: center;
+        color: #fff;
+      }
+      .dithering-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .select-wrapper {
+        position: relative;
+      }
+      .dithering-select {
+        appearance: none;
+        width: 150px;
+        height: 32px;
+        padding: 4px 24px 4px 8px;
+        background: #4e4e4e;
+        border: 1px solid #6e6e6e;
+        border-radius: 4px;
+        color: #fff;
+      }
+      .chevron {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+      }
+      .slider-base {
+        position: relative;
+        width: 176px;
+        height: 10px;
+        background: #4e4e4e;
+        border: 1px solid #6e6e6e;
+        border-radius: 4px;
+      }
+      .slider-base input {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+      }
+      .percent-txt {
+        width: 40px;
+        text-align: center;
+        color: #fff;
+      }
+      .import-export {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .popup {
+        position: absolute;
+        top: 40px;
+        right: 0;
+        background: #555;
+        border: 1px solid #777;
+        padding: 8px;
+        border-radius: 4px;
+        z-index: 10;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="msg8" class="hidden">
+      The document size must be a multiple of 8, max 512x384
+    </div>
+    <div id="previewWrapper"><img id="previewImg" src="" alt="Preview" /></div>
+    <div id="controls">
+      <button id="scaleDown" class="control-button" aria-label="Zoom out">
+        <img class="icon" src="ui-v2/img/search-minus-24-outlined.svg" alt="" />
+      </button>
+      <div class="scale-label" id="scaleLabel">3x</div>
+      <button id="scaleUp" class="control-button" aria-label="Zoom in">
+        <img class="icon" src="ui-v2/img/search-plus-24-outlined.svg" alt="" />
+      </button>
+      <div class="options-menu" style="position: relative">
+        <button id="optionsBtn" class="control-button" aria-label="Options">
+          <img class="icon" src="ui-v2/img/options-24-outlined.svg" alt="" />
+        </button>
+        <div id="sysMenu" class="popup hidden">
+          <div style="margin-bottom: 4px; color: #fff">Your System Scale</div>
+          <select
+            id="sysScaleSel"
+            class="dithering-select"
+            style="width: 120px"
+          >
+            <option value="1.00">100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.50" selected>150%</option>
+            <option value="1.75">175%</option>
+            <option value="2.00">200%</option>
+            <option value="2.25">225%</option>
+            <option value="2.50">250%</option>
+          </select>
+        </div>
+      </div>
+      <div class="dithering-wrap">
+        <label
+          for="ditherGroupSel"
+          class="dithering-label"
+          style="color: #fff; width: 58px; text-align: right"
+          >Dithering:</label
+        >
+        <div class="select-wrapper">
+          <select
+            id="ditherGroupSel"
+            class="dithering-select"
+            style="width: 120px"
+          >
+            <option value="ordered">Ordered</option>
+            <option value="diffusion">Diffusion</option>
+            <option value="pattern">Pattern</option>
+          </select>
+          <img
+            class="chevron"
+            src="ui-v2/img/chevron-bottom-24-outlined.svg"
+            alt=""
+          />
+        </div>
+      </div>
+      <div class="dithering-wrap">
+        
+        <div class="select-wrapper">
+          <select id="ditherAlgSel" class="dithering-select"></select>
+          <img
+            class="chevron"
+            src="ui-v2/img/chevron-bottom-24-outlined.svg"
+            alt=""
+          />
+        </div>
+      </div>
+      <button id="applyBtn" class="apply-btn">Paste</button>
+      <div class="dithering-amount">
+        <label
+          for="ditherStrength"
+          class="dithering-label"
+          style="color: #fff; width: 58px; text-align: right"
+          >Amount:</label
+        >
+        <div class="slider-base">
+          <input
+            type="range"
+            id="ditherStrength"
+            min="0"
+            max="100"
+            value="50"
+          />
+        </div>
+        <div class="percent-txt" id="ditherLabel">50%</div>
+      </div>
+      <button id="brightBtn" class="control-button" aria-label="Brightness">
+        <img
+          id="brightIcon"
+          class="icon"
+          src="ui-v2/img/brightness-high-24-outlined.svg"
+          alt=""
+        />
+      </button>
+      <button id="flashBtn" class="control-button" aria-label="Flash">
+        <img
+          id="flashIcon"
+          class="icon"
+          src="ui-v2/img/lightning-off-24-outlined.svg"
+          alt=""
+        />
+      </button>
+      <hr class="separator" style="height: 32px; border-left: 1px solid #777" />
+      <div class="import-export">
+        <button id="importBtn" class="import-export-btn">
+          <img
+            class="icon"
+            src="ui-v2/img/cassette-24-import.svg"
+            alt=""
+          /><span>Import</span>
+        </button>
+        <button id="saveScrBtn" class="import-export-btn">
+          <img
+            class="icon"
+            src="ui-v2/img/cassette-24-export.svg"
+            alt=""
+          /><span>Export</span>
+        </button>
       </div>
     </div>
-    <div class="dithering-wrap">
-      <label for="ditherGroupSel" class="dithering-label" style="color:#fff;width:58px;text-align:right;">Dithering:</label>
-      <div class="select-wrapper">
-        <select id="ditherGroupSel" class="dithering-select" style="width:120px;">
-          <option value="ordered">Ordered</option>
-          <option value="diffusion">Diffusion</option>
-          <option value="pattern">Pattern</option>
-        </select>
-        <img class="chevron" src="ui-v2/img/chevron-bottom-24-outlined.svg" alt="" />
-      </div>
-    </div>
-    <div class="dithering-wrap">
-      <label for="ditherAlgSel" class="dithering-label" style="color:#fff;width:58px;text-align:right;">Algorithm:</label>
-      <div class="select-wrapper">
-        <select id="ditherAlgSel" class="dithering-select"></select>
-        <img class="chevron" src="ui-v2/img/chevron-bottom-24-outlined.svg" alt="" />
-      </div>
-    </div>
-    <button id="applyBtn" class="apply-btn">Paste</button>
-    <div class="dithering-amount">
-      <label for="ditherStrength" class="dithering-label" style="color:#fff;width:58px;text-align:right;">Amount:</label>
-      <div class="slider-base"><input type="range" id="ditherStrength" min="0" max="100" value="50" /></div>
-      <div class="percent-txt" id="ditherLabel">50%</div>
-    </div>
-    <button id="brightBtn" class="control-button" aria-label="Brightness"><img id="brightIcon" class="icon" src="ui-v2/img/brightness-high-24-outlined.svg" alt="" /></button>
-    <button id="flashBtn" class="control-button" aria-label="Flash"><img id="flashIcon" class="icon" src="ui-v2/img/lightning-off-24-outlined.svg" alt="" /></button>
-    <hr class="separator" style="height:32px;border-left:1px solid #777;" />
-    <div class="import-export">
-      <button id="importBtn" class="import-export-btn"><img class="icon" src="ui-v2/img/cassette-24-import.svg" alt="" /><span>Import</span></button>
-      <button id="saveScrBtn" class="import-export-btn"><img class="icon" src="ui-v2/img/cassette-24-export.svg" alt="" /><span>Export</span></button>
-    </div>
-  </div>
-  <script src="main.js"></script>
-</body>
+    <script src="main.js"></script>
+  </body>
 </html>
