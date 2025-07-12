@@ -1,6 +1,11 @@
 // utils/scr.js
 // Encoding ZX Spectrum SCR files with tiling support
 
+const NEIGHBOR_OFFSETS = [
+  [-1, 0], [1, 0], [0, -1], [0, 1],
+  [-1, -1], [1, -1], [-1, 1], [1, 1]
+];
+
 function encodeTile(indexed, tx = 0, ty = 0) {
   const { pixels, attrs, width: W, height: H } = indexed;
   const wBlocks = Math.ceil(W / 8);
@@ -19,6 +24,31 @@ function encodeTile(indexed, tx = 0, ty = 0) {
     for (let bx = 0; bx < cols; bx++) {
       const aIdx = (startBy + by) * wBlocks + (startBx + bx);
       const attr = attrs[aIdx] || { ink: 7, paper: 0, bright: 0, flash: 0 };
+
+      let fillByte = 0;
+      if (attr.ink === attr.paper) {
+        let ones = 0;
+        let zeros = 0;
+        for (const [dx, dy] of NEIGHBOR_OFFSETS) {
+          const nbx = startBx + bx + dx;
+          const nby = startBy + by + dy;
+          if (nbx < 0 || nbx >= wBlocks || nby < 0 || nby >= hBlocks) continue;
+          const nAttr = attrs[nby * wBlocks + nbx];
+          if (!nAttr || nAttr.ink === nAttr.paper) continue;
+          for (let sy = 0; sy < 8; sy++) {
+            const y = nby * 8 + sy;
+            if (y >= H) continue;
+            for (let sx = 0; sx < 8; sx++) {
+              const x = nbx * 8 + sx;
+              if (x >= W) continue;
+              const idx = pixels[y * W + x];
+              if (idx === nAttr.ink) ones++; else zeros++;
+            }
+          }
+        }
+        fillByte = ones > zeros ? 0xFF : 0x00;
+      }
+
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;
         const yGlobal = (startBy + by) * 8 + dy;
@@ -26,8 +56,8 @@ function encodeTile(indexed, tx = 0, ty = 0) {
         const rowOffset = (y & 0x38) << 2;
         const lineOffset = (y & 0x07) << 8;
         const baseAddr = bankOffset | rowOffset | lineOffset | bx;
-        if (attr.ink === attr.paper) { // if the block is uniform, fill with zero
-          scr[baseAddr] = 0;
+        if (attr.ink === attr.paper) {
+          scr[baseAddr] = fillByte;
           continue;
         }
         let byte = 0;

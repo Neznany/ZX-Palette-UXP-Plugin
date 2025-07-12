@@ -115,4 +115,33 @@ function decode(scr) {
   }
 })();
 
+// Case 6: uniform block neighbours majority 1
+(() => {
+  const W = 16; const H = 8;
+  const pixels = new Uint8Array(W * H);
+  const attrs = [
+    { ink: 0, paper: 0, bright: 0, flash: 0 },
+    { ink: 1, paper: 0, bright: 0, flash: 0 },
+  ];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 8; x < 16; x++) {
+      pixels[y * W + x] = 1;
+    }
+  }
+  const idx = { pixels, attrs, width: W, height: H };
+  const tiles = encodeTiles(idx);
+  assert.strictEqual(tiles.length, 1);
+  const d = decode(tiles[0].bytes);
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 16; x++) {
+      const val = d.pixels[y * 256 + x];
+      assert.strictEqual(val, 1);
+    }
+  }
+  const a0 = d.attrs[0];
+  const a1 = d.attrs[1];
+  assert.strictEqual(a0, 0);
+  assert.strictEqual(a1, 1);
+})();
+
 console.log('SCR tiling tests passed');
