@@ -388,8 +388,17 @@ async function saveSCR() {
   } else {
     const folder = await fs.getFolder();
     if (!folder) return;
+    const existing = new Set((await folder.getEntries()).map(e => e.name));
     for (const t of tiles) {
-      const file = await folder.createFile(`${docName}_${t.tx}_${t.ty}.scr`, { overwrite: true });
+      const base = `${docName}_${t.tx}_${t.ty}`;
+      let name = `${base}.scr`;
+      let n = 1;
+      while (existing.has(name)) {
+        name = `${base}_${n}.scr`;
+        n++;
+      }
+      existing.add(name);
+      const file = await folder.createFile(name, { overwrite: false });
       await file.write(t.bytes.buffer, { format: formats.binary });
     }
   }
