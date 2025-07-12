@@ -115,11 +115,13 @@ function setFlashEnabled(v) {
 function applyFlashAttrs(indexed, flashRgba, w, h) {
   const cols = w >> 3;
   const rows = h >> 3;
+  // preallocate frequency buffer once to avoid allocating on every block
+  const freq = new Int16Array(8);
   for (let by = 0; by < rows; by++) {
     for (let bx = 0; bx < cols; bx++) {
       const attr = indexed.attrs[by * cols + bx];
       let flagged = false;
-      const freq = new Array(8).fill(0);
+      freq.fill(0);
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;
         for (let dx = 0; dx < 8; dx++) {
@@ -147,17 +149,26 @@ function applyFlashAttrs(indexed, flashRgba, w, h) {
   }
 }
 
-// Core filter
+// Core filter: performs dithering + palette reduction and returns indexed frame
 function zxFilter(rgba, w, h, flashRgba = null) {
+  // compute per-block brightness if auto mode is enabled
   let brightBits;
   if (brightMode === "auto") {
     const orig = new Uint8Array(rgba);
     brightBits = computeBrightAttrs(orig, w, h);
   }
+
+  // 1) dithering in RGB space
   ditherSeparateChannels(rgba, w, h, selectedAlg, ditherT);
+
+  // 2) reduce each 8x8 block to the two closest ZX colors
   reduceToDominantPair(rgba, w, h);
+
+  // 3) convert to indexed attributes/pixels
   const bright = brightMode === "on" ? 1 : 0;
   const indexed = rgbaToIndexed(rgba, w, h, { bright, flash: 0, brightBits });
+
+  // 4) integrate FLASH layer if present
   if (flashEnabled && flashRgba) applyFlashAttrs(indexed, flashRgba, w, h);
   return indexed;
 }

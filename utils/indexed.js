@@ -11,15 +11,18 @@ function rgbToIndex(r, g, b) {
   return (gBit << 2) | (rBit << 1) | bBit;
 }
 
+// Analyse RGB data and guess BRIGHT bit for every 8x8 attribute block.
+// Result is an array of 0/1 flags used by rgbaToIndexed when brightMode='auto'.
 function computeBrightAttrs(rgba, w, h) {
   const cols = w >> 3;
   const rows = h >> 3;
-  const bits = new Uint8Array(cols * rows);
-  const blackBuf = [];
+  const bits = new Uint8Array(cols * rows);      // output BRIGHT bits per block
+  const blackBuf = [];                            // remember pure black blocks
   let brightBlocks = 0;
   let darkBlocks = 0;
   for (let by = 0; by < rows; by++) {
     for (let bx = 0; bx < cols; bx++) {
+      // count nearest palette indexes inside current block
       const freq = new Array(ZX_FULL.length).fill(0);
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;
@@ -41,6 +44,7 @@ function computeBrightAttrs(rgba, w, h) {
           freq[best]++;
         }
       }
+      // find two most frequent colors in this block
       const sorted = freq.map((c, i) => ({ c, i })).sort((a, b) => b.c - a.c);
       const idxA = sorted[0].i;
       const idxB = sorted[1] ? sorted[1].i : idxA;
@@ -49,6 +53,7 @@ function computeBrightAttrs(rgba, w, h) {
         blackBuf.push(bi);
         continue;
       }
+      // accumulate counts for dim vs bright colors
       const pair = [ { idx: idxA, count: freq[idxA] }, { idx: idxB, count: freq[idxB] } ];
       let brightScore = 0;
       let darkScore = 0;
@@ -61,6 +66,7 @@ function computeBrightAttrs(rgba, w, h) {
       if (bit) brightBlocks++; else darkBlocks++;
     }
   }
+  // use majority value for pure black blocks to avoid blinking artifacts
   const majority = (brightBlocks + darkBlocks) ? (brightBlocks >= darkBlocks ? 1 : 0) : 0;
   for (const bi of blackBuf) bits[bi] = majority;
   return bits;
