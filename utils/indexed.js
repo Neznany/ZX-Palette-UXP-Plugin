@@ -152,11 +152,11 @@ function optimizeAttributes(indexed) {
   const single = [];
   for (let i = 0; i < attrs.length; i++) {
     const attr = attrs[i];
-    if (isDark) {
+    if (isDark) { //"темна" картинка
       if (attr.paper > attr.ink) {
         const t = attr.paper; attr.paper = attr.ink; attr.ink = t;
       }
-    } else {
+    } else { //"світла"
       if (attr.paper < attr.ink) {
         const t = attr.paper; attr.paper = attr.ink; attr.ink = t;
       }
