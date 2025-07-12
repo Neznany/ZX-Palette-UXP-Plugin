@@ -42,6 +42,7 @@ function setupControls({
   setAlgorithm,
   setDitherStrength,
   setSliderDragging,
+  notifySliderChange,
   setBrightMode,
   setFlashEnabled,
   saveSCR,
@@ -145,11 +146,11 @@ function setupControls({
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
     setSliderDragging(true);
-    updatePreview(true);
+    notifySliderChange();
   });
   rngStr?.addEventListener("change", () => {
     setSliderDragging(false);
-    updatePreview(true);
+    notifySliderChange();
     setTimeout(() => updatePreview(), 500);
   });
 

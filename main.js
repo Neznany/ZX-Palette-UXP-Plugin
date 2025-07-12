@@ -58,10 +58,31 @@ let pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
 // Track slider interaction state
 let sliderDragging = false;
 let sliderReleasedAt = 0;
+let sliderDragPending = false;
+let sliderRAF = 0;
+
+function startSliderLoop() {
+  if (!sliderRAF) sliderRAF = window.requestAnimationFrame(sliderLoop);
+}
+
+async function sliderLoop() {
+  sliderRAF = 0;
+  if (sliderDragPending && !updatePreview._running) {
+    sliderDragPending = false;
+    await updatePreview(true);
+  }
+  if (sliderDragging || sliderDragPending) startSliderLoop();
+}
 
 function setSliderDragging(v) {
   sliderDragging = !!v;
   if (!v) sliderReleasedAt = Date.now();
+  startSliderLoop();
+}
+
+function notifySliderChange() {
+  sliderDragPending = true;
+  startSliderLoop();
 }
 
 function isSliderLocked() {
@@ -392,6 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setAlgorithm,
     setDitherStrength,
     setSliderDragging,
+    notifySliderChange,
     setBrightMode,
     setFlashEnabled,
     saveSCR, // ← функція експорту
