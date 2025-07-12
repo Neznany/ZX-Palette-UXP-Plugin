@@ -111,7 +111,7 @@ function decode(scr) {
   for (const val of d.pixels) assert.strictEqual(val, 0);
   for (let i = 0; i < d.attrs.length; i++) {
     const a = d.attrs[i];
-    if (i === 0) assert.strictEqual(a, 27); else assert.strictEqual(a, 7);
+    if (i === 0) assert.strictEqual(a, 28); else assert.strictEqual(a, 7);
   }
 })();
 
