@@ -44,6 +44,9 @@ function setupControls({
   setBrightMode,
   setFlashEnabled,
   saveSCR,
+  postponeAnalysis,
+  startSliderDrag,
+  stopSliderDrag,
 }) {
   const {
     btnDown,
@@ -139,15 +142,18 @@ function setupControls({
   });
 
   // Strength slider
+  rngStr?.addEventListener("pointerdown", startSliderDrag);
+  rngStr?.addEventListener("pointerup", stopSliderDrag);
+  rngStr?.addEventListener("pointercancel", stopSliderDrag);
+
   rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
+    postponeAnalysis();
     updatePreview(true);
   });
-  rngStr?.addEventListener("change", () => {
-    updatePreview();
-  });
+  rngStr?.addEventListener("change", stopSliderDrag);
 
   // Scale Preview controls
   btnDown?.addEventListener("click", () => {

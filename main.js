@@ -55,6 +55,26 @@ let lastSettingsKey = "";
 let thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
 let pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
 
+// timestamp in ms until which document analysis should be skipped
+let skipAnalysisUntil = 0;
+let sliderDragging = false;
+
+function startSliderDrag() {
+  sliderDragging = true;
+  postponeAnalysis();
+}
+
+function stopSliderDrag() {
+  sliderDragging = false;
+  postponeAnalysis();
+  setTimeout(updatePreview, 500);
+}
+
+function postponeAnalysis(ms = 500) {
+  const now = Date.now();
+  skipAnalysisUntil = Math.max(skipAnalysisUntil, now + ms);
+}
+
 function getScale() {
   return scale;
 }
@@ -228,6 +248,11 @@ async function updatePreview(cacheOnly = false) {
     setTimeout(() => updatePreview(cacheOnly), 250);
     return;
   }
+  const now = Date.now();
+  if (!cacheOnly && now < skipAnalysisUntil) {
+    setTimeout(() => updatePreview(cacheOnly), skipAnalysisUntil - now);
+    return;
+  }
   if (updatePreview._running || busy) {
     if (updatePreview._pending !== false) {
       updatePreview._pending = cacheOnly;
@@ -359,9 +384,10 @@ async function saveSCR() {
 
 
 // Listen for Photoshop script actions
-action.addNotificationListener(["make", "set", "delete"], () =>
-  window.requestAnimationFrame(updatePreview)
-);
+action.addNotificationListener(["make", "set", "delete"], () => {
+  if (Date.now() < skipAnalysisUntil) return;
+  window.requestAnimationFrame(updatePreview);
+});
 
 // Ensure DOM is ready before binding UI
 document.addEventListener("DOMContentLoaded", () => {
@@ -377,6 +403,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setBrightMode,
     setFlashEnabled,
     saveSCR, // ← функція експорту
+    postponeAnalysis,
+    startSliderDrag,
+    stopSliderDrag,
   });
 
   // Initial update
@@ -385,6 +414,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Fallback interval
   setInterval(() => {
     if (flashEnabled) flashPhase = !flashPhase;
-    if (!updatePreview._running) updatePreview();
+    if (!updatePreview._running) {
+      if (sliderDragging) {
+        updatePreview(true);
+      } else {
+        updatePreview();
+      }
+    }
   }, 500);
 });
