@@ -134,7 +134,6 @@ async function renderFromPixels() {
 
   const base = new Uint8Array(rgba);
   const flash = flashRgba ? new Uint8Array(flashRgba) : null;
-
   const indexed = zxFilter(base, w, h, flash);
   const rgbaOff = indexedToRgba(indexed, false);
   const rgbaOn = flashEnabled ? indexedToRgba(indexed, true) : rgbaOff;
@@ -229,7 +228,13 @@ async function updatePreview(cacheOnly = false) {
     setTimeout(() => updatePreview(cacheOnly), 250);
     return;
   }
-  if (updatePreview._running || busy) return;
+  if (updatePreview._running || busy) {
+    if (updatePreview._pending !== false) {
+      updatePreview._pending = cacheOnly;
+    }
+    return;
+  }
+  updatePreview._pending = null;
   updatePreview._running = true;
   try {
     if (cacheOnly) {
@@ -281,10 +286,8 @@ async function updatePreview(cacheOnly = false) {
 
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
     if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
-
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
     if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
-
     const sysScale = parseFloat(selSys.value) || 1;
     const s = getScale();
     img.style.width = (thumbCache.w * s / 4) / sysScale + "px";
@@ -296,6 +299,11 @@ async function updatePreview(cacheOnly = false) {
     }
   } finally {
     updatePreview._running = false;
+    if (updatePreview._pending !== null) {
+      const pending = updatePreview._pending;
+      updatePreview._pending = null;
+      updatePreview(pending);
+    }
   }
 }
 
