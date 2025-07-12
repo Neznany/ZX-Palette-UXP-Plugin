@@ -143,10 +143,10 @@ function setupControls({
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
-    updatePreview(true);
+    updatePreview();
   });
   rngStr?.addEventListener("change", () => {
-    updatePreview();
+    updatePreview(true);
   });
 
   // Scale Preview controls
