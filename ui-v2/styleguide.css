@@ -1,0 +1,18 @@
+:root {
+  --drop-down-list-item-font-family: "Inter", Helvetica;
+  --drop-down-list-item-font-weight: 600;
+  --drop-down-list-item-font-size: 12px;
+  --drop-down-list-item-letter-spacing: 0px;
+  --drop-down-list-item-line-height: normal;
+  --drop-down-list-item-font-style: normal;
+  --label-font-family: "Inter", Helvetica;
+  --label-font-weight: 400;
+  --label-font-size: 12px;
+  --label-letter-spacing: 0px;
+  --label-line-height: normal;
+  --label-font-style: normal;
+  --variable-collection-button-fill: rgba(78, 78, 78, 1);
+  --variable-collection-button-stroke: rgba(110, 110, 110, 1);
+  --variable-collection-icon-color: rgba(255, 255, 255, 1);
+  --shape-corner-extra-small: 4px;
+}

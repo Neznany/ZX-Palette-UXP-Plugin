@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="globals.css" />
+    <link rel="stylesheet" href="styleguide.css" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Image Editor Controls</title>
+  </head>
+  <body>
+    <div class="controls">
+      <div class="options-wrap">
+        <button class="control-button" aria-label="Zoom out">
+          <img class="icon" src="img/search-minus-24-outlined.svg" alt="Zoom out" />
+        </button>
+        <div class="scale-label" aria-label="Current zoom level">
+          <span class="text-wrapper">4x</span>
+        </div>
+        <button class="control-button" aria-label="Zoom in">
+          <img class="icon" src="img/search-plus-24-outlined.svg" alt="Zoom in" />
+        </button>
+        <button class="control-button" aria-label="Options">
+          <img class="icon" src="img/options-24-outlined.svg" alt="Options" />
+        </button>
+        <div class="dithering-wrap">
+          <label for="dithering-select" class="dithering-label">Dithering:</label>
+          <div class="select-wrapper">
+            <select id="dithering-select" class="dithering-select">
+              <option value="diffusion">Diffusion</option>
+              <option value="floyd-steinberg">Floyd-Steinberg-Algorithm</option>
+            </select>
+            <img class="chevron-bottom" src="img/chevron-bottom-24-outlined.svg" alt="" aria-hidden="true" />
+          </div>
+        </div>
+        <button class="apply-btn">
+          <span class="text-wrapper-2">Paste</span>
+        </button>
+        <div class="dithering-amount">
+          <label for="dithering-amount" class="dithering-2">Amount:</label>
+          <div class="slider-base">
+            <input type="range" id="dithering-amount" min="0" max="100" value="100" class="slider" />
+            <div class="pointer" aria-hidden="true"></div>
+          </div>
+          <div class="percent-txt" aria-label="Dithering amount percentage">
+            <span class="text-wrapper-3">100%</span>
+          </div>
+        </div>
+        <button class="control-button" aria-label="Adjust brightness">
+          <img class="icon" src="img/brightness-high-24-outlined.svg" alt="Brightness" />
+        </button>
+        <button class="control-button" aria-label="Adjust contrast">
+          <img class="icon" src="img/lightning-24-outlined.svg" alt="Contrast" />
+        </button>
+      </div>
+      <hr class="separator" aria-hidden="true" />
+      <div class="import-export">
+        <button class="import-export-btn">
+          <img class="icon" src="img/cassette-24-import.svg" alt="" />
+          <span class="text-wrapper-4">Import</span>
+        </button>
+        <button class="import-export-btn">
+          <img class="icon" src="img/cassette-24-export.svg" alt="" />
+          <span class="text-wrapper-4">Export</span>
+        </button>
+      </div>
+    </div>
+  </body>
+</html>
