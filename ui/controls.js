@@ -214,20 +214,22 @@ function setupControls({
     updatePreview();
   });
 
-  optionsBtn?.addEventListener("click", () => {
-    sysMenu.classList.toggle("hidden");
-  });
-  document.addEventListener("click", (e) => {
-    if (!optionsBtn.contains(e.target) && !sysMenu.contains(e.target)) {
-      sysMenu.classList.add("hidden");
-    }
-  });
+  if (optionsBtn && sysMenu) {
+    optionsBtn.addEventListener("click", () => {
+      sysMenu.classList.toggle("hidden");
+    });
+    document.addEventListener("click", (e) => {
+      if (!optionsBtn.contains(e.target) && !sysMenu.contains(e.target)) {
+        sysMenu.classList.add("hidden");
+      }
+    });
+  }
 
   importBtn?.addEventListener("click", () => {
     alert("Import not implemented yet");
   });
   saveScrBtn?.addEventListener("click", () => { saveSCR().catch(console.error); });
-
+  saveScrBtn?.addEventListener("click", () => { saveSCR().catch(console.error); });
   rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
