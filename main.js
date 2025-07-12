@@ -22,7 +22,6 @@ const btnApply = document.getElementById("applyBtn");
 // State
 let scale = 3;
 let busy = false;
-let prevB64 = "";
 let lastW = 0,
   lastH = 0;
 // Initialize selectedAlg from saved settings or fallback to first available
@@ -50,6 +49,10 @@ let flashEnabled = (function () {
 })();
 
 let flashPhase = false;
+let lastDocId = null;
+let lastHistory = null;
+let lastSettingsKey = "";
+let thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
 
 function getScale() {
   return scale;
@@ -127,8 +130,6 @@ function zxFilter(rgba, w, h, flashRgba = null) {
 async function fetchThumb() {
   const d = app.activeDocument;
   if (!d) return null;
-  // If the host is already in a modal state (e.g. a dialog is open)
-  // skip fetching the preview to avoid errors
   if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
     return null;
   }
@@ -137,64 +138,69 @@ async function fetchThumb() {
       const baseW = Math.round(+d.width);
       const baseH = Math.round(+d.height);
 
-    // 1) Отримуємо RGBA-пікселі через утиліту
-    const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH }, false);
+      // 1) Отримуємо RGBA-пікселі через утиліту
+      const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH }, false);
 
-    let flashRgba = null;
-    if (flashEnabled) {
-      let flashLayer = await ensureFlashLayer(d, imaging);
-      try {
-        const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
-        flashRgba = fr.rgba;
-        if (flashRgba.length < baseW * baseH * 4) {
-          flashLayer = await ensureFlashLayer(d, imaging);
-          const fr2 = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
-          flashRgba = fr2.rgba;
+      let flashRgba = null;
+      if (flashEnabled) {
+        let flashLayer = await ensureFlashLayer(d, imaging);
+        try {
+          const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
+          flashRgba = fr.rgba;
+          if (flashRgba.length < baseW * baseH * 4) {
+            flashLayer = await ensureFlashLayer(d, imaging);
+            const fr2 = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
+            flashRgba = fr2.rgba;
+          }
+        } catch (e) {
+          await ensureFlashLayer(d, imaging);
+          console.warn("FLASH layer empty");
         }
-      } catch (e) {
-        await ensureFlashLayer(d, imaging);
-        console.warn("FLASH layer empty");
       }
-    }
 
-    // 2) Фільтруємо та отримуємо індексований буфер
-    const indexed = zxFilter(rgba, baseW, baseH, flashRgba);
-    const rgbaFiltered = indexedToRgba(indexed, flashPhase && flashEnabled);
+      // 2) Фільтруємо та отримуємо індексований буфер
+      const indexed = zxFilter(rgba, baseW, baseH, flashRgba);
 
-    // 3) Upscale + JPEG encode (fixed preview always 4×)
-    const s = 4;
-    const w2 = baseW * s;
-    const h2 = baseH * s;
-    const outBuf = new Uint8Array(w2 * h2 * 3);
-    for (let y = 0; y < h2; y++) {
-      const srcY = Math.floor(y / s);
-      for (let x = 0; x < w2; x++) {
-        const srcX = Math.floor(x / s);
-        const i4 = (srcY * baseW + srcX) * 4;
-        // беремо з відфільтрованого RGBA
-        const i4src = i4;
-        const i3 = (y * w2 + x) * 3;
-        outBuf[i3] = rgbaFiltered[i4src];
-        outBuf[i3 + 1] = rgbaFiltered[i4src + 1];
-        outBuf[i3 + 2] = rgbaFiltered[i4src + 2];
+      const rgbaOff = indexedToRgba(indexed, false);
+      const rgbaOn = flashEnabled ? indexedToRgba(indexed, true) : rgbaOff;
+
+      // 3) Upscale + JPEG encode (fixed preview always 4×)
+      const s = 4;
+      const w2 = baseW * s;
+      const h2 = baseH * s;
+
+      async function encode(rgbaBuf) {
+        const outBuf = new Uint8Array(w2 * h2 * 3);
+        for (let y = 0; y < h2; y++) {
+          const srcY = Math.floor(y / s);
+          for (let x = 0; x < w2; x++) {
+            const srcX = Math.floor(x / s);
+            const i4 = (srcY * baseW + srcX) * 4;
+            const i3 = (y * w2 + x) * 3;
+            outBuf[i3] = rgbaBuf[i4];
+            outBuf[i3 + 1] = rgbaBuf[i4 + 1];
+            outBuf[i3 + 2] = rgbaBuf[i4 + 2];
+          }
+        }
+        const rgbData = await imaging.createImageDataFromBuffer(outBuf, {
+          width: w2, height: h2, components: 3, colorSpace: "RGB",
+        });
+        const b64 = await imaging.encodeImageData({
+          imageData: rgbData,
+          base64: true,
+          format: "jpg",
+          quality: 1.0,
+        });
+        rgbData.dispose();
+        return b64;
       }
-    }
-    const rgbData = await imaging.createImageDataFromBuffer(outBuf, {
-      width: w2, height: h2, components: 3, colorSpace: "RGB",
-    });
-    const b64 = await imaging.encodeImageData({
-      imageData: rgbData,
-      base64: true,
-      format: "jpg",
-      quality: 1.0,
-    });
-    rgbData.dispose();
 
-      return { b64, w: w2, h: h2 };
+      const off = await encode(rgbaOff);
+      const on = await encode(rgbaOn);
+
+      return { indexed, off, on, w: w2, h: h2 };
     }, { commandName: "ZX Filter: Fetch Preview Thumb" });
   } catch (err) {
-    // If Photoshop becomes busy between the modal check and executeAsModal,
-    // swallow the error and signal caller to retry later
     if (err && err.message && /modal/i.test(err.message)) {
       return null;
     }
@@ -205,7 +211,6 @@ async function fetchThumb() {
 
 async function updatePreview() {
   if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
-    // Photoshop is busy with another modal operation, retry soon
     setTimeout(updatePreview, 250);
     return;
   }
@@ -221,7 +226,6 @@ async function updatePreview() {
     const docW = Math.round(+d.width),
       docH = Math.round(+d.height);
 
-    // Use cached DOM references
     if (docW % 8 || docH % 8 || docW > 512 || docH > 384) {
       msg.classList.remove("hidden");
       img.src = "";
@@ -229,26 +233,35 @@ async function updatePreview() {
     }
     msg.classList.add("hidden");
 
-    const thumb = await fetchThumb();
-    if (!thumb) {
-      // Host might be busy; try again shortly
-      if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
-        setTimeout(updatePreview, 250);
-      }
-      return;
-    }
+    const docId = d.id;
+    const histId = d.activeHistoryState ? d.activeHistoryState.id : null;
+    const settingsKey = JSON.stringify({ selectedAlg, ditherT, brightMode, flashEnabled });
 
-    if (thumb.b64 !== prevB64) {
-      prevB64 = thumb.b64;
+    let needFetch = false;
+    if (docId !== lastDocId) { lastDocId = docId; needFetch = true; }
+    if (histId !== lastHistory) { lastHistory = histId; needFetch = true; }
+    if (settingsKey !== lastSettingsKey) { lastSettingsKey = settingsKey; needFetch = true; }
+
+    if (needFetch) {
+      const thumb = await fetchThumb();
+      if (!thumb) {
+        if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
+          setTimeout(updatePreview, 250);
+        }
+        return;
+      }
+      thumbCache = { off: thumb.off, on: thumb.on, indexed: thumb.indexed, w: thumb.w, h: thumb.h };
       lastW = thumb.w;
       lastH = thumb.h;
-      img.src = "data:image/jpeg;base64," + thumb.b64;
     }
+
+    const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
+    if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
 
     const sysScale = parseFloat(selSys.value) || 1;
     const s = getScale();
-    img.style.width = (lastW * s / 4) / sysScale + "px";
-    img.style.height = (lastH * s / 4) / sysScale + "px";
+    img.style.width = (thumbCache.w * s / 4) / sysScale + "px";
+    img.style.height = (thumbCache.h * s / 4) / sysScale + "px";
   } catch (e) {
     console.error(e);
     if (e && e.message && /modal/i.test(e.message)) {
