@@ -136,6 +136,48 @@ function indexedToRgba({ pixels, attrs, width: w, height: h }, swapFlash = false
   return rgba;
 }
 
+function _isImageDark(indexed) {
+  const { pixels } = indexed;
+  let sum = 0;
+  for (const idx of pixels) sum += idx;
+  const threshold = (pixels.length * 7) / 2;
+  return sum < threshold;
+}
+
+function optimizeAttributes(indexed) {
+  const { pixels, attrs, width: w, height: h } = indexed;
+  const cols = w >> 3;
+  const rows = h >> 3;
+  const isDark = _isImageDark(indexed);
+  const single = [];
+  for (let i = 0; i < attrs.length; i++) {
+    const attr = attrs[i];
+    if (isDark) {
+      if (attr.paper > attr.ink) {
+        const t = attr.paper; attr.paper = attr.ink; attr.ink = t;
+      }
+    } else {
+      if (attr.paper < attr.ink) {
+        const t = attr.paper; attr.paper = attr.ink; attr.ink = t;
+      }
+    }
+    if (attr.ink === attr.paper) single.push(i);
+  }
+
+  if (single.length === attrs.length) {
+    for (const i of single) {
+      const attr = attrs[i];
+      attr.ink = (7 - attr.paper) & 7;
+    }
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const bi = (y >> 3) * cols + (x >> 3);
+        pixels[y * w + x] = attrs[bi].paper;
+      }
+    }
+  }
+}
+
 module.exports = {
   rgbaToIndexed,
   indexedToRgba,
@@ -143,4 +185,5 @@ module.exports = {
   ZX_BASE,
   ZX_FULL,
   rgbToIndex,
+  optimizeAttributes,
 };

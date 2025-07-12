@@ -50,7 +50,10 @@ function encodeTile(indexed, tx = 0, ty = 0) {
   return scr;
 }
 
+const { optimizeAttributes } = require('./indexed');
+
 function encodeTiles(indexed) {
+  optimizeAttributes(indexed);
   const tilesX = Math.ceil(indexed.width / 256);
   const tilesY = Math.ceil(indexed.height / 192);
   const tiles = [];
