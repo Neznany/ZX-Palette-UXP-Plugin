@@ -394,7 +394,7 @@ async function saveSCR() {
       let name = `${base}.scr`;
       let n = 1;
       while (existing.has(name)) {
-        name = `${base}_${n}.scr`;
+        name = `${base}__${n}.scr`;
         n++;
       }
       existing.add(name);
