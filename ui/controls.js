@@ -8,14 +8,20 @@ function getDomElements() {
     btnDown: document.getElementById("scaleDown"),
     btnUp: document.getElementById("scaleUp"),
     lblScale: document.getElementById("scaleLabel"),
+    optionsBtn: document.getElementById("optionsBtn"),
+    sysMenu: document.getElementById("sysMenu"),
     selSys: document.getElementById("sysScaleSel"),
     img: document.getElementById("previewImg"),
     btnApply: document.getElementById("applyBtn"),
+    selGroup: document.getElementById("ditherGroupSel"),
     selAlg: document.getElementById("ditherAlgSel"),
     rngStr: document.getElementById("ditherStrength"),
     lblStr: document.getElementById("ditherLabel"),
-    brightSel: document.getElementById("brightModeSel"),
-    flashChk: document.getElementById("flashChk"),
+    brightBtn: document.getElementById("brightBtn"),
+    brightIcon: document.getElementById("brightIcon"),
+    flashBtn: document.getElementById("flashBtn"),
+    flashIcon: document.getElementById("flashIcon"),
+    importBtn: document.getElementById("importBtn"),
     saveScrBtn: document.getElementById("saveScrBtn"),
   };
 }
@@ -23,7 +29,7 @@ function getDomElements() {
 function saveSettings(settings) {
   try {
     localStorage.setItem("zx_plugin_settings", JSON.stringify(settings));
-  } catch (e) { /* ignore */ }
+  } catch (e) {}
 }
 
 function loadSettings() {
@@ -32,6 +38,28 @@ function loadSettings() {
     return s ? JSON.parse(s) : {};
   } catch (e) { return {}; }
 }
+
+const DITHER_GROUPS = {
+  ordered: [
+    ["checker2x1", "Checkerboard 2x1"],
+    ["bayer2", "Bayer 2×2"],
+    ["bayer4", "Bayer 4×4"],
+    ["bayer", "Bayer 8×8"],
+    ["clustered", "Clustered ordered"],
+    ["linediag7x7", "Line-diag 7×7"],
+  ],
+  diffusion: [
+    ["fs", "Floyd–Steinberg"],
+    ["jjn", "Jarvis–Judice–Ninke"],
+    ["sierra3", "Sierra-3"],
+    ["stucki", "Stucki"],
+    ["burkes", "Burkes"],
+    ["atkinson", "Atkinson"],
+  ],
+  pattern: [
+    ["bluenoise", "Blue-noise"],
+  ],
+};
 
 function setupControls({
   zxFilter,
@@ -51,35 +79,53 @@ function setupControls({
     btnDown,
     btnUp,
     lblScale,
+    optionsBtn,
+    sysMenu,
     selSys,
     img,
     btnApply,
+    selGroup,
     selAlg,
     rngStr,
     lblStr,
-    brightSel,
-    flashChk,
+    brightBtn,
+    brightIcon,
+    flashBtn,
+    flashIcon,
+    importBtn,
     saveScrBtn,
   } = getDomElements();
 
-  // Відновлення налаштувань при старті
   const settings = loadSettings();
   if (settings.scalePreview) {
     setScale(settings.scalePreview);
     lblScale.textContent = settings.scalePreview + "x";
   }
   if (settings.systemScale && selSys) selSys.value = settings.systemScale;
+  if (settings.ditherGroup && selGroup) selGroup.value = settings.ditherGroup;
+  function populate(group) {
+    const list = DITHER_GROUPS[group] || [];
+    selAlg.innerHTML = "";
+    list.forEach(([val, label]) => {
+      const opt = document.createElement("option");
+      opt.value = val; opt.textContent = label; selAlg.appendChild(opt);
+    });
+  }
+  populate(selGroup.value);
   if (settings.ditherAlg && selAlg) selAlg.value = settings.ditherAlg;
-  if (settings.brightMode && brightSel) brightSel.value = settings.brightMode;
-  if (typeof settings.flashEnabled === 'boolean' && flashChk) {
-    flashChk.checked = settings.flashEnabled;
-    setFlashEnabled(flashChk.checked);
+
+  let currentBright = settings.brightMode || "on";
+  let flashState = !!settings.flashEnabled;
+
+  if (settings.brightMode && brightBtn) {
+    updateBright(settings.brightMode);
+  }
+  if (typeof settings.flashEnabled === "boolean" && flashBtn) {
+    updateFlash(settings.flashEnabled);
   }
 
-  // Синхронізуємо selectedAlg у main.js з UI після відновлення
   if (selAlg) setAlgorithm(selAlg.value);
 
-  // Helper to update scale label and preview
   function updateScaleLabelAndPreview() {
     const scale = getScale();
     lblScale.textContent = scale + "x";
@@ -87,60 +133,106 @@ function setupControls({
       ...loadSettings(),
       scalePreview: scale,
       systemScale: selSys?.value,
+      ditherGroup: selGroup?.value,
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value,
-      flashEnabled: flashChk?.checked
+      brightMode: currentBright,
+      flashEnabled: flashState,
     });
     updatePreview();
   }
 
-  // Algorithm selector
+  selGroup?.addEventListener("change", () => {
+    populate(selGroup.value);
+    setAlgorithm(selAlg.value);
+    saveSettings({
+      ...loadSettings(),
+      ditherGroup: selGroup.value,
+      ditherAlg: selAlg.value,
+      scalePreview: getScale(),
+      systemScale: selSys?.value,
+      brightMode: currentBright,
+      flashEnabled: flashState,
+    });
+    updatePreview();
+  });
+
   selAlg?.addEventListener("change", () => {
     setAlgorithm(selAlg.value);
     saveSettings({
       ...loadSettings(),
       ditherAlg: selAlg.value,
+      ditherGroup: selGroup?.value,
       scalePreview: getScale(),
       systemScale: selSys?.value,
-      brightMode: brightSel?.value,
-      flashEnabled: flashChk?.checked
+      brightMode: currentBright,
+      flashEnabled: flashState,
     });
     updatePreview();
   });
 
-  // Bright mode selector
-  brightSel?.addEventListener("change", () => {
-    setBrightMode(brightSel.value);
+  function updateBright(mode) {
+    currentBright = mode;
+    setBrightMode(mode);
+    const map = {
+      on: "ui-v2/img/brightness-high-24-outlined.svg",
+      off: "ui-v2/img/brightness-low-24-outlined.svg",
+      auto: "ui-v2/img/brightness-auto.svg",
+    };
+    if (brightIcon) brightIcon.src = map[mode];
+  }
+
+  brightBtn?.addEventListener("click", () => {
+    const order = ["on", "off", "auto"];
+    const next = order[(order.indexOf(currentBright) + 1) % order.length];
+    updateBright(next);
     saveSettings({
       ...loadSettings(),
-      brightMode: brightSel.value,
+      brightMode: next,
+      ditherAlg: selAlg?.value,
+      ditherGroup: selGroup?.value,
       scalePreview: getScale(),
       systemScale: selSys?.value,
-      ditherAlg: selAlg?.value,
-      flashEnabled: flashChk?.checked
+      flashEnabled: flashState,
     });
     updatePreview();
   });
 
-  flashChk?.addEventListener("change", () => {
-    setFlashEnabled(flashChk.checked);
+  function updateFlash(state) {
+    flashState = !!state;
+    setFlashEnabled(flashState);
+    flashIcon.src = flashState ? "ui-v2/img/lightning-24-outlined.svg" : "ui-v2/img/lightning-off-24-outlined.svg";
+  }
+  flashBtn?.addEventListener("click", () => {
+    updateFlash(!flashState);
     saveSettings({
       ...loadSettings(),
-      flashEnabled: flashChk.checked,
+      flashEnabled: flashState,
+      ditherAlg: selAlg?.value,
+      ditherGroup: selGroup?.value,
       scalePreview: getScale(),
       systemScale: selSys?.value,
-      ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value
+      brightMode: currentBright,
     });
     updatePreview();
   });
 
-  // Save SCR button
-  saveScrBtn?.addEventListener("click", () => {
-    saveSCR().catch(console.error);
+  if (optionsBtn && sysMenu) {
+    optionsBtn.addEventListener("click", () => {
+      sysMenu.classList.toggle("hidden");
+    });
+    document.addEventListener("click", (e) => {
+      if (!optionsBtn.contains(e.target) && !sysMenu.contains(e.target)) {
+        sysMenu.classList.add("hidden");
+      }
+    });
+  }
+
+  importBtn?.addEventListener("click", () => {
+    alert("Import not implemented yet");
   });
 
-  // Strength slider
+  saveScrBtn?.addEventListener("click", () => { saveSCR().catch(console.error); });
+
   rngStr?.addEventListener("input", () => {
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
@@ -154,20 +246,17 @@ function setupControls({
     setTimeout(() => updatePreview(), 500);
   });
 
-  // Scale Preview controls
   btnDown?.addEventListener("click", () => {
     let s = getScale();
     if (s > 1) setScale(s - 1);
     updateScaleLabelAndPreview();
   });
-
   btnUp?.addEventListener("click", () => {
     let s = getScale();
     if (s < 4) setScale(s + 1);
     updateScaleLabelAndPreview();
   });
 
-  // system Scale selector
   selSys?.addEventListener("change", () => {
     const { lastW, lastH } = getLastDimensions();
     if (lastW && lastH) {
@@ -178,15 +267,15 @@ function setupControls({
     saveSettings({
       ...loadSettings(),
       systemScale: selSys.value,
-      scalePreview: getScale(),
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value,
-      flashEnabled: flashChk?.checked
+      ditherGroup: selGroup?.value,
+      scalePreview: getScale(),
+      brightMode: currentBright,
+      flashEnabled: flashState,
     });
     updatePreview();
   });
 
-  // Apply button
   btnApply?.addEventListener("click", async () => {
     btnApply.disabled = true;
     try {
@@ -194,10 +283,9 @@ function setupControls({
         const d = app.activeDocument;
         const W = Math.round(+d.width);
         const H = Math.round(+d.height);
-        // Отримуємо RGBA через утиліту
         const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
         let flashRgba = null;
-        if (flashChk?.checked) {
+        if (flashState) {
           let flashLayer = await ensureFlashLayer(d, imaging);
           try {
             const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
@@ -212,32 +300,18 @@ function setupControls({
             console.warn("FLASH layer empty");
           }
         }
-        // Застосовуємо фільтр ZX
         const indexed = zxFilter(rgba, W, H, flashRgba);
         const outRgba = indexedToRgba(indexed, false);
-        const newData = await imaging.createImageDataFromBuffer(outRgba, {
-          width: W,
-          height: H,
-          components: 4,
-          colorSpace: "RGB",
-        });
+        const newData = await imaging.createImageDataFromBuffer(outRgba, { width: W, height: H, components: 4, colorSpace: "RGB" });
         const lyr = await d.createLayer({ name: "Filtered ZX " + selAlg.value });
-        await imaging.putPixels({
-          layerID: lyr.id,
-          imageData: newData,
-          replace: true,
-        });
+        await imaging.putPixels({ layerID: lyr.id, imageData: newData, replace: true });
         newData.dispose();
-      }, {
-        commandName: "Apply ZX Filter",
-        historyStateInfo: { name: "Apply ZX Filter", target: app.activeDocument }
-      });
+      }, { commandName: "Apply ZX Filter", historyStateInfo: { name: "Apply ZX Filter", target: app.activeDocument } });
     } finally {
       btnApply.disabled = false;
       updatePreview();
     }
   });
 }
-
 
 module.exports = { setupControls, loadSettings };
