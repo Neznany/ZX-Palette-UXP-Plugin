@@ -283,9 +283,6 @@ async function updatePreview(cacheOnly = false) {
         lastH = thumb.h;
       }
     }
-
-    const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
-    if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
     if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
     const sysScale = parseFloat(selSys.value) || 1;
