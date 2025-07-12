@@ -113,6 +113,8 @@ function setupControls({
   }
   populate(selGroup.value);
   if (settings.ditherAlg && selAlg) selAlg.value = settings.ditherAlg;
+  let currentBright = settings.brightMode || "on";
+  let flashState = !!settings.flashEnabled;
   if (settings.brightMode && brightBtn) {
     updateBright(settings.brightMode);
   }
@@ -166,7 +168,6 @@ function setupControls({
     updatePreview();
   });
 
-  let currentBright = settings.brightMode || "on";
   function updateBright(mode) {
     currentBright = mode;
     setBrightMode(mode);
@@ -194,7 +195,6 @@ function setupControls({
     updatePreview();
   });
 
-  let flashState = !!settings.flashEnabled;
   function updateFlash(state) {
     flashState = !!state;
     setFlashEnabled(flashState);
@@ -226,7 +226,6 @@ function setupControls({
   importBtn?.addEventListener("click", () => {
     alert("Import not implemented yet");
   });
-
   saveScrBtn?.addEventListener("click", () => { saveSCR().catch(console.error); });
 
   rngStr?.addEventListener("input", () => {
