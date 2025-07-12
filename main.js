@@ -147,6 +147,7 @@ async function fetchThumb() {
         const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: baseW, height: baseH, layerID: flashLayer.id }, false);
         flashRgba = fr.rgba;
       } catch (e) {
+        ensureFlashLayer(d, imaging); 
         console.warn("FLASH layer empty");
       }
     }

@@ -18,8 +18,8 @@
       "label": {
       "default": "ZX Palette"
       },
-      "preferredFloatingSize": { "width": 540, "height": 600 },
-      "minimumSize":           { "width": 200, "height": 300 },
+      "preferredFloatingSize": { "width": 640, "height": 600 },
+      "minimumSize":           { "width": 300, "height": 300 },
       "maximumSize":           { "width": 1600, "height": 1200 }
     },
     {

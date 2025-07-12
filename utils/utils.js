@@ -58,7 +58,7 @@ async function ensureFlashLayer(doc, imaging) {
   if (created) {
     const buf = new Uint8Array(W * H * 4);
     const corners = [
-      [0, 0], [W - 1, 0], [0, H - 1], [W - 1, H - 1]
+      [0, 0], [W - 1, H - 1]
     ];
     for (const [x, y] of corners) {
       const p = (y * W + x) * 4;
