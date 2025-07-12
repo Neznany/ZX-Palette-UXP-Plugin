@@ -55,6 +55,40 @@ let lastSettingsKey = "";
 let thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
 let pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
 
+// Track slider interaction state
+let sliderDragging = false;
+let sliderReleasedAt = 0;
+let sliderDragPending = false;
+let sliderRAF = 0;
+
+function startSliderLoop() {
+  if (!sliderRAF) sliderRAF = window.requestAnimationFrame(sliderLoop);
+}
+
+async function sliderLoop() {
+  sliderRAF = 0;
+  if (sliderDragPending && !updatePreview._running) {
+    sliderDragPending = false;
+    await updatePreview(true);
+  }
+  if (sliderDragging || sliderDragPending) startSliderLoop();
+}
+
+function setSliderDragging(v) {
+  sliderDragging = !!v;
+  if (!v) sliderReleasedAt = Date.now();
+  startSliderLoop();
+}
+
+function notifySliderChange() {
+  sliderDragPending = true;
+  startSliderLoop();
+}
+
+function isSliderLocked() {
+  return sliderDragging || Date.now() - sliderReleasedAt < 500;
+}
+
 function getScale() {
   return scale;
 }
@@ -228,6 +262,10 @@ async function updatePreview(cacheOnly = false) {
     setTimeout(() => updatePreview(cacheOnly), 250);
     return;
   }
+  if (!cacheOnly && isSliderLocked()) {
+    setTimeout(() => updatePreview(cacheOnly), 100);
+    return;
+  }
   if (updatePreview._running || busy) {
     if (updatePreview._pending !== false) {
       updatePreview._pending = cacheOnly;
@@ -374,6 +412,8 @@ document.addEventListener("DOMContentLoaded", () => {
     getLastDimensions,
     setAlgorithm,
     setDitherStrength,
+    setSliderDragging,
+    notifySliderChange,
     setBrightMode,
     setFlashEnabled,
     saveSCR, // ← функція експорту
