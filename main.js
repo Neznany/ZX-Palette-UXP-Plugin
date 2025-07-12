@@ -53,6 +53,7 @@ let lastDocId = null;
 let lastHistory = null;
 let lastSettingsKey = "";
 let thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
+let pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
 
 function getScale() {
   return scale;
@@ -127,6 +128,53 @@ function zxFilter(rgba, w, h, flashRgba = null) {
   return indexed;
 }
 
+async function renderFromPixels() {
+  const { rgba, flashRgba, w, h } = pixelCache;
+  if (!rgba) return null;
+
+  const base = new Uint8Array(rgba);
+  const flash = flashRgba ? new Uint8Array(flashRgba) : null;
+
+  const indexed = zxFilter(base, w, h, flash);
+  const rgbaOff = indexedToRgba(indexed, false);
+  const rgbaOn = flashEnabled ? indexedToRgba(indexed, true) : rgbaOff;
+
+  const s = 4;
+  const w2 = w * s;
+  const h2 = h * s;
+
+  async function encode(buf) {
+    const outBuf = new Uint8Array(w2 * h2 * 3);
+    for (let y = 0; y < h2; y++) {
+      const srcY = Math.floor(y / s);
+      for (let x = 0; x < w2; x++) {
+        const srcX = Math.floor(x / s);
+        const i4 = (srcY * w + srcX) * 4;
+        const i3 = (y * w2 + x) * 3;
+        outBuf[i3] = buf[i4];
+        outBuf[i3 + 1] = buf[i4 + 1];
+        outBuf[i3 + 2] = buf[i4 + 2];
+      }
+    }
+    const imgData = await imaging.createImageDataFromBuffer(outBuf, {
+      width: w2, height: h2, components: 3, colorSpace: "RGB",
+    });
+    const b64 = await imaging.encodeImageData({
+      imageData: imgData,
+      base64: true,
+      format: "jpg",
+      quality: 1.0,
+    });
+    imgData.dispose();
+    return b64;
+  }
+
+  const off = await encode(rgbaOff);
+  const on = await encode(rgbaOn);
+
+  return { indexed, off, on, w: w2, h: h2 };
+}
+
 async function fetchThumb() {
   const d = app.activeDocument;
   if (!d) return null;
@@ -158,47 +206,14 @@ async function fetchThumb() {
         }
       }
 
-      // 2) Фільтруємо та отримуємо індексований буфер
-      const indexed = zxFilter(rgba, baseW, baseH, flashRgba);
+      pixelCache = {
+        rgba: new Uint8Array(rgba),
+        flashRgba: flashRgba ? new Uint8Array(flashRgba) : null,
+        w: baseW,
+        h: baseH,
+      };
 
-      const rgbaOff = indexedToRgba(indexed, false);
-      const rgbaOn = flashEnabled ? indexedToRgba(indexed, true) : rgbaOff;
-
-      // 3) Upscale + JPEG encode (fixed preview always 4×)
-      const s = 4;
-      const w2 = baseW * s;
-      const h2 = baseH * s;
-
-      async function encode(rgbaBuf) {
-        const outBuf = new Uint8Array(w2 * h2 * 3);
-        for (let y = 0; y < h2; y++) {
-          const srcY = Math.floor(y / s);
-          for (let x = 0; x < w2; x++) {
-            const srcX = Math.floor(x / s);
-            const i4 = (srcY * baseW + srcX) * 4;
-            const i3 = (y * w2 + x) * 3;
-            outBuf[i3] = rgbaBuf[i4];
-            outBuf[i3 + 1] = rgbaBuf[i4 + 1];
-            outBuf[i3 + 2] = rgbaBuf[i4 + 2];
-          }
-        }
-        const rgbData = await imaging.createImageDataFromBuffer(outBuf, {
-          width: w2, height: h2, components: 3, colorSpace: "RGB",
-        });
-        const b64 = await imaging.encodeImageData({
-          imageData: rgbData,
-          base64: true,
-          format: "jpg",
-          quality: 1.0,
-        });
-        rgbData.dispose();
-        return b64;
-      }
-
-      const off = await encode(rgbaOff);
-      const on = await encode(rgbaOn);
-
-      return { indexed, off, on, w: w2, h: h2 };
+      return await renderFromPixels();
     }, { commandName: "ZX Filter: Fetch Preview Thumb" });
   } catch (err) {
     if (err && err.message && /modal/i.test(err.message)) {
@@ -209,50 +224,59 @@ async function fetchThumb() {
 }
 
 
-async function updatePreview() {
+async function updatePreview(cacheOnly = false) {
   if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
-    setTimeout(updatePreview, 250);
+    setTimeout(() => updatePreview(cacheOnly), 250);
     return;
   }
   if (updatePreview._running || busy) return;
   updatePreview._running = true;
   try {
-    const d = app.activeDocument;
-    if (!d) {
-      msg.classList.remove("hidden");
-      img.src = "";
-      return;
-    }
-    const docW = Math.round(+d.width),
-      docH = Math.round(+d.height);
-
-    if (docW % 8 || docH % 8 || docW > 512 || docH > 384) {
-      msg.classList.remove("hidden");
-      img.src = "";
-      return;
-    }
-    msg.classList.add("hidden");
-
-    const docId = d.id;
-    const histId = d.activeHistoryState ? d.activeHistoryState.id : null;
-    const settingsKey = JSON.stringify({ selectedAlg, ditherT, brightMode, flashEnabled });
-
-    let needFetch = false;
-    if (docId !== lastDocId) { lastDocId = docId; needFetch = true; }
-    if (histId !== lastHistory) { lastHistory = histId; needFetch = true; }
-    if (settingsKey !== lastSettingsKey) { lastSettingsKey = settingsKey; needFetch = true; }
-
-    if (needFetch) {
-      const thumb = await fetchThumb();
-      if (!thumb) {
-        if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
-          setTimeout(updatePreview, 250);
-        }
+    if (cacheOnly) {
+      const thumb = await renderFromPixels();
+      if (thumb) {
+        thumbCache = { off: thumb.off, on: thumb.on, indexed: thumb.indexed, w: thumb.w, h: thumb.h };
+        lastW = thumb.w;
+        lastH = thumb.h;
+      }
+    } else {
+      const d = app.activeDocument;
+      if (!d) {
+        msg.classList.remove("hidden");
+        img.src = "";
         return;
       }
-      thumbCache = { off: thumb.off, on: thumb.on, indexed: thumb.indexed, w: thumb.w, h: thumb.h };
-      lastW = thumb.w;
-      lastH = thumb.h;
+      const docW = Math.round(+d.width),
+        docH = Math.round(+d.height);
+
+      if (docW % 8 || docH % 8 || docW > 512 || docH > 384) {
+        msg.classList.remove("hidden");
+        img.src = "";
+        return;
+      }
+      msg.classList.add("hidden");
+
+      const docId = d.id;
+      const histId = d.activeHistoryState ? d.activeHistoryState.id : null;
+      const settingsKey = JSON.stringify({ selectedAlg, ditherT, brightMode, flashEnabled });
+
+      let needFetch = false;
+      if (docId !== lastDocId) { lastDocId = docId; needFetch = true; }
+      if (histId !== lastHistory) { lastHistory = histId; needFetch = true; }
+      if (settingsKey !== lastSettingsKey) { lastSettingsKey = settingsKey; needFetch = true; }
+
+      if (needFetch) {
+        const thumb = await fetchThumb();
+        if (!thumb) {
+          if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
+            setTimeout(updatePreview, 250);
+          }
+          return;
+        }
+        thumbCache = { off: thumb.off, on: thumb.on, indexed: thumb.indexed, w: thumb.w, h: thumb.h };
+        lastW = thumb.w;
+        lastH = thumb.h;
+      }
     }
 
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
