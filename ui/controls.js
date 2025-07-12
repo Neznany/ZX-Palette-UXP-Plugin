@@ -190,11 +190,17 @@ function setupControls({
         const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
         let flashRgba = null;
         if (flashChk?.checked) {
-          const flashLayer = await ensureFlashLayer(d, imaging);
+          let flashLayer = await ensureFlashLayer(d, imaging);
           try {
             const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
             flashRgba = fr.rgba;
+            if (flashRgba.length < W * H * 4) {
+              flashLayer = await ensureFlashLayer(d, imaging);
+              const fr2 = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
+              flashRgba = fr2.rgba;
+            }
           } catch (e) {
+            await ensureFlashLayer(d, imaging);
             console.warn("FLASH layer empty");
           }
         }
