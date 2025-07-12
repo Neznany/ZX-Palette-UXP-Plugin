@@ -46,32 +46,57 @@ function findLayerByName(layers, name) {
   return null;
 }
 
+async function addFlashCorners(layer, doc, imaging, replace = true) {
+  const W = Math.round(+doc.width);
+  const H = Math.round(+doc.height);
+  const buf = new Uint8Array(W * H * 4);
+  const corners = [
+    [0, 0], [W - 1, H - 1]
+  ];
+  for (const [x, y] of corners) {
+    const p = (y * W + x) * 4;
+    buf[p + 3] = 1;
+  }
+  const imgData = await imaging.createImageDataFromBuffer(buf, {
+    width: W,
+    height: H,
+    components: 4,
+    colorSpace: "RGB",
+  });
+  await imaging.putPixels({ layerID: layer.id, imageData: imgData, replace });
+  imgData.dispose();
+}
+
 async function ensureFlashLayer(doc, imaging) {
   const W = Math.round(+doc.width);
   const H = Math.round(+doc.height);
   let layer = findLayerByName(doc.layers, "FLASH");
-  let created = false;
   if (!layer) {
     layer = await doc.createLayer({ name: "FLASH" });
-    created = true;
+    await addFlashCorners(layer, doc, imaging, true);
+    return layer;
   }
-  if (created) {
-    const buf = new Uint8Array(W * H * 4);
-    const corners = [
-      [0, 0], [W - 1, H - 1]
-    ];
-    for (const [x, y] of corners) {
-      const p = (y * W + x) * 4;
-      buf[p + 3] = 1;
-    }
-    const imgData = await imaging.createImageDataFromBuffer(buf, {
-      width: W,
-      height: H,
-      components: 4,
-      colorSpace: "RGB",
-    });
-    await imaging.putPixels({ layerID: layer.id, imageData: imgData, replace: true });
-    imgData.dispose();
+
+  let rgba = null;
+  try {
+    const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: layer.id }, false);
+    rgba = fr.rgba;
+  } catch (e) {
+    rgba = null;
+  }
+
+  if (!rgba || rgba.length === 0) {
+    await addFlashCorners(layer, doc, imaging, false);
+    return layer;
+  }
+
+  if (rgba.length < W * H * 4) {
+    layer.name = "FLASH_OLD";
+    const newLayer = await doc.createLayer({ name: "FLASH" });
+    await addFlashCorners(newLayer, doc, imaging, true);
+    try { await layer.moveAbove(newLayer); } catch (e) {}
+    try { await layer.merge(); } catch (e) {}
+    layer = newLayer;
   }
   return layer;
 }
