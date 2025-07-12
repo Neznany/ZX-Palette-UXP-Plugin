@@ -41,6 +41,7 @@ function setupControls({
   getLastDimensions,
   setAlgorithm,
   setDitherStrength,
+  setSliderDragging,
   setBrightMode,
   setFlashEnabled,
   saveSCR,
@@ -143,10 +144,13 @@ function setupControls({
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
-    updatePreview();
+    setSliderDragging(true);
+    updatePreview(true);
   });
   rngStr?.addEventListener("change", () => {
+    setSliderDragging(false);
     updatePreview(true);
+    setTimeout(() => updatePreview(), 500);
   });
 
   // Scale Preview controls
