@@ -143,6 +143,9 @@ function setupControls({
     const v = Number(rngStr.value);
     lblStr.textContent = v + "%";
     setDitherStrength(v / 100);
+    updatePreview(true);
+  });
+  rngStr?.addEventListener("change", () => {
     updatePreview();
   });
 
