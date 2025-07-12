@@ -218,6 +218,7 @@ function ditherFS(channel, w, h, t) {
  * 6 сусідів з вагою 1/8, масштабуємо їх на t.
  */
 function ditherAtkinson(channel, w, h, t) {
+  t *= 1.5;
   // буфер помилок
   const err = Array(h)
     .fill()
