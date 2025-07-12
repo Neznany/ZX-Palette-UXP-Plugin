@@ -11,14 +11,15 @@ async function getRgbaPixels(imaging, options, applyAlpha = true) {
   const { left, top, width, height, layerID } = options;
   const getOpts = {
     sourceBounds: { left, top, width, height },
-    targetSize: { width, height },
     applyAlpha,
   };
   if (layerID !== undefined) getOpts.layerID = layerID;
   const { imageData } = await imaging.getPixels(getOpts);
+  const outW = imageData.width;
+  const outH = imageData.height;
   const data = await imageData.getData();
   imageData.dispose();
-  const pxCount = width * height;
+  const pxCount = outW * outH;
   let rgba;
   if (data.length === pxCount * 3) { // якщо RGB
     // Перетворюємо RGB в RGBA
@@ -32,7 +33,7 @@ async function getRgbaPixels(imaging, options, applyAlpha = true) {
   } else {
     rgba = data;
   }
-  return { rgba, width, height };
+  return { rgba, width: outW, height: outH };
 }
 
 function findLayerByName(layers, name) {
@@ -85,12 +86,16 @@ async function ensureFlashLayer(doc, imaging) {
     rgba = null;
   }
 
-  if (!rgba || rgba.length === 0) {
-    await addFlashCorners(layer, doc, imaging, false);
-    return layer;
+  let needFix = false;
+  if (!rgba || rgba.length < W * H * 4) {
+    needFix = true;
+  } else {
+    const tl = rgba[3];
+    const br = rgba[((H - 1) * W + (W - 1)) * 4 + 3];
+    if (tl === 0 || br === 0) needFix = true;
   }
 
-  if (rgba.length < W * H * 4) {
+  if (needFix) {
     layer.name = "FLASH_OLD";
     const newLayer = await doc.createLayer({ name: "FLASH" });
     await addFlashCorners(newLayer, doc, imaging, true);
