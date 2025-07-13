@@ -54,6 +54,10 @@ let lastHistory = null;
 let lastSettingsKey = "";
 let thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
 let pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
+let lastDocMode = "";
+let lastDocBits = "";
+let lastDocWidth = 0;
+let lastDocHeight = 0;
 
 // Track slider interaction state
 let sliderDragging = false;
@@ -304,15 +308,25 @@ async function updatePreview(cacheOnly = false) {
       const modeStr = String(d.mode || "").toLowerCase();
       const bits = d.bitsPerChannel;
 
-      if (docW % 8 ||
+      const invalid = docW % 8 ||
         docH % 8 ||
         docW > 512 ||
         docH > 384 ||
         !/8/.test(bits) || // d.bitsPerChannel returns string "bitDepth8"
-        !/rgb/.test(modeStr)
-      ) {
+        !/rgb/.test(modeStr);
+
+      const formatChanged =
+        modeStr !== lastDocMode || bits !== lastDocBits ||
+        docW !== lastDocWidth || docH !== lastDocHeight;
+
+      if (invalid) {
         img.src = "";
-        console.log(modeStr, bits, docW, docH);
+        thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
+        pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
+        lastDocMode = modeStr;
+        lastDocBits = bits;
+        lastDocWidth = docW;
+        lastDocHeight = docH;
         return;
       }
 
@@ -324,6 +338,7 @@ async function updatePreview(cacheOnly = false) {
       if (docId !== lastDocId) { lastDocId = docId; needFetch = true; }
       if (histId !== lastHistory) { lastHistory = histId; needFetch = true; }
       if (settingsKey !== lastSettingsKey) { lastSettingsKey = settingsKey; needFetch = true; }
+      if (formatChanged) { needFetch = true; }
 
       if (needFetch) {
         const thumb = await fetchThumb();
@@ -337,6 +352,10 @@ async function updatePreview(cacheOnly = false) {
         lastW = thumb.w;
         lastH = thumb.h;
       }
+      lastDocMode = modeStr;
+      lastDocBits = bits;
+      lastDocWidth = docW;
+      lastDocHeight = docH;
     }
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
     if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
