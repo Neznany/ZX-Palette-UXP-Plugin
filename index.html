@@ -92,7 +92,6 @@
       }
 
       button,
-      select,
       option {
         font-family: "Inter", Helvetica;
         font-weight: 400;
@@ -108,6 +107,7 @@
       select {
         appearance: none;
       }
+
       .control-button,
       .apply-btn,
       .import-export-btn {
@@ -119,8 +119,42 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 4px;
+        margin: 0px 8px 0px 0px;
         cursor: pointer;
+      }
+
+      sp-button {
+        --spectrum-global-dimension-size-200: 16px; /* padding */
+        --spectrum-button-m-width: 32px;
+      }
+
+      .icon-button {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        background: #4e4e4e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      /* якщо треба hover/focus стилі */
+      .icon-button:hover {
+        background: #5e5e5e;
+      }
+      .icon-button:focus {
+        outline: 2px solid #aaf;
+      }
+
+      .my-icon-btn::part(base) {
+        min-width: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        --spectrum-alias-border-width: 0px !important;
+        background: #4e4e4e !important;
       }
     </style>
   </head>
@@ -133,7 +167,8 @@
     <div id="previewWrapper">
       <img id="previewImg" src="" alt="Preview" />
       <div id="msg8">
-        Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to 512x384
+        Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to
+        512x384
       </div>
     </div>
 
@@ -141,14 +176,34 @@
       <sp-button
         id="scaleDown"
         treatment="fill"
-        variant="primary"
         class="control-button"
         aria-label="Zoom out"
+        variant="quiet"
+        size="s"
+        icon="ui:edit"
+        icon-only
       >
         <img class="icon" src="img/zoom-minus.svg" alt="" />
       </sp-button>
       <span id="scaleLabel">3x</span>
-      <button id="scaleUp">+</button>
+      <button id="scaleUp" class="icon-button">
+        <img src="./img/zoom-plus.png" width="16" height="16" alt="Zoom in" />
+      </button>
+      <sp-button
+        size="s"
+        variant="quiet"
+        icon-only
+        class="my-icon-btn"
+        aria-label="Zoom in"
+      >
+        <img
+          slot="icon"
+          src="./img/zoom-plus.svg"
+          width="16"
+          height="16"
+          alt=""
+        />
+      </sp-button>
 
       <label>
         System Scale
