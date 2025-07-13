@@ -32,11 +32,18 @@
       }
 
       #msg8 {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
         background: #c33;
         color: #fff;
         padding: 6px 8px;
         font-size: 12px;
         text-align: center;
+        pointer-events: none;
+        z-index: 0;
         font-family: "Inter", Helvetica;
         font-weight: 400;
       }
@@ -62,6 +69,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
       }
 
       #previewImg {
@@ -72,6 +80,8 @@
         /* вже є */
         display: block;
         border: none;
+        position: relative;
+        z-index: 1;
       }
 
       /* Controls pinned at bottom */
@@ -122,13 +132,9 @@
   </head>
 
   <body>
-    <div id="msg8" class="hidden">
-      The document size must be a multiple of 8, max 512x384
-    </div>
-
     <div id="previewWrapper">
+      <div id="msg8">Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to 512x384</div>
       <img id="previewImg" src="" alt="Preview" />
-      The document size must be a multiple of 8, max 512x384
     </div>
 
     <div id="controls">

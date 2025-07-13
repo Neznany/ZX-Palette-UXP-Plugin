@@ -296,19 +296,25 @@ async function updatePreview(cacheOnly = false) {
     } else {
       const d = app.activeDocument;
       if (!d) {
-        msg.classList.remove("hidden");
         img.src = "";
         return;
       }
       const docW = Math.round(+d.width),
         docH = Math.round(+d.height);
+      const modeStr = String(d.mode || "").toLowerCase();
+      const bits = d.bitsPerChannel || d.depth || d.bits || 8;
 
-      if (docW % 8 || docH % 8 || docW > 512 || docH > 384) {
-        msg.classList.remove("hidden");
+      if (
+        docW % 8 ||
+        docH % 8 ||
+        docW > 512 ||
+        docH > 384 ||
+        bits !== 8 ||
+        !/rgb/.test(modeStr)
+      ) {
         img.src = "";
         return;
       }
-      msg.classList.add("hidden");
 
       const docId = d.id;
       const histId = d.activeHistoryState ? d.activeHistoryState.id : null;
