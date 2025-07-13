@@ -304,8 +304,7 @@ async function updatePreview(cacheOnly = false) {
       const modeStr = String(d.mode || "").toLowerCase();
       const bits = d.bitsPerChannel || d.depth || d.bits || 8;
 
-      if (
-        docW % 8 ||
+      if (docW % 8 ||
         docH % 8 ||
         docW > 512 ||
         docH > 384 ||
