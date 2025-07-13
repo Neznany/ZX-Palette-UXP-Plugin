@@ -20,11 +20,18 @@
         flex-direction: column;
       }
       #msg8 {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
         background: #c33;
         color: #fff;
         padding: 6px 8px;
         font-size: 12px;
         text-align: center;
+        pointer-events: none;
+        z-index: 0;
       }
       .hidden {
         display: none;
@@ -37,6 +44,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
       }
       #previewImg {
         image-rendering: pixelated;
@@ -44,6 +52,8 @@
         -ms-interpolation-mode: nearest-neighbor;
         display: block;
         border: none;
+        position: relative;
+        z-index: 1;
       }
       #controls {
         flex: 0 0 auto;
@@ -149,10 +159,10 @@
     </style>
   </head>
   <body>
-    <div id="msg8" class="hidden">
-      The document size must be a multiple of 8, max 512x384
+    <div id="previewWrapper">
+      <div id="msg8">Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to 512x384</div>
+      <img id="previewImg" src="" alt="Preview" />
     </div>
-    <div id="previewWrapper"><img id="previewImg" src="" alt="Preview" /></div>
     <div id="controls">
       <button id="scaleDown" class="control-button" aria-label="Zoom out">
         <img class="icon" src="ui-v2/img/search-minus-24-outlined.svg" alt="" />
