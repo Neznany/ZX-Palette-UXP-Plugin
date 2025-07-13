@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <title>ZX Palette</title>
+    <script
+      type="module"
+      src="https://unpkg.com/@spectrum-web-components/bundle/elements.js?module"
+    ></script>
+    <script type="module">
+      import "@spectrum-web-components/theme/express/scale-medium.js";
+      import "@spectrum-web-components/slider/sp-slider.js";
+    </script>
+
     <style>
       html,
       body {
@@ -13,12 +22,15 @@
         background: #444;
         color: #ddd;
         font-family: "Inter", Helvetica;
+        font-weight: 400;
         font-size: 12px;
       }
+
       body {
         display: flex;
         flex-direction: column;
       }
+
       #msg8 {
         position: absolute;
         left: 0;
@@ -32,39 +44,74 @@
         text-align: center;
         pointer-events: none;
         z-index: 0;
+        font-family: "Inter", Helvetica;
+        font-weight: 400;
       }
+
       .hidden {
         display: none;
       }
+
+      /* Preview area grows, scrolls if content overflows */
       #previewWrapper {
         flex: 1 1 auto;
         overflow: auto;
+        border: none;
         margin: 2px;
         background: #000;
+                color: #fff;
+        padding: 6px 8px;
+        font-size: 12px;
+        text-align: center;
+        font-family: "Inter", Helvetica;
+        font-weight: 400;
+        /* optional frame background */
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
       }
+
       #previewImg {
         image-rendering: pixelated;
         image-rendering: crisp-edges;
+        /* Fallback лише для IE */
         -ms-interpolation-mode: nearest-neighbor;
+        /* вже є */
         display: block;
         border: none;
         position: relative;
         z-index: 1;
       }
+
+      /* Controls pinned at bottom */
       #controls {
         flex: 0 0 auto;
-        padding: 8px 12px;
+        padding: 2px 8px;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 4px;
         align-items: center;
-        border-top: 1px solid #777;
+        border-top: 1px solid #999;
         background: #555;
-        position: relative;
+      }
+
+      button,
+      select,
+      option {
+        font-family: "Inter", Helvetica;
+        font-weight: 400;
+        padding: 1px 2px;
+        margin: 4px 8px;
+        border-radius: 4px;
+        background: #444;
+        color: #ddd;
+        border: 1px solid #666;
+        cursor: pointer;
+      }
+
+      select {
+        appearance: none;
       }
       .control-button,
       .apply-btn,
@@ -80,206 +127,98 @@
         padding: 4px;
         cursor: pointer;
       }
-      .apply-btn {
-        width: 136px;
-        color: #fff;
-      }
-      .import-export-btn {
-        width: 77px;
-        gap: 4px;
-        color: #fff;
-      }
-      .icon {
-        width: 18px;
-        height: 18px;
-      }
-      .scale-label {
-        width: 16px;
-        text-align: center;
-        color: #fff;
-      }
-      .dithering-wrap {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .select-wrapper {
-        position: relative;
-      }
-      .dithering-select {
-        appearance: none;
-        width: 150px;
-        height: 32px;
-        padding: 4px 24px 4px 8px;
-        background: #4e4e4e;
-        border: 1px solid #6e6e6e;
-        border-radius: 4px;
-        color: #fff;
-      }
-      .chevron {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-      }
-      .slider-base {
-        position: relative;
-        width: 176px;
-        height: 10px;
-        background: #4e4e4e;
-        border: 1px solid #6e6e6e;
-        border-radius: 4px;
-      }
-      .slider-base input {
-        width: 100%;
-        height: 100%;
-        background: transparent;
-      }
-      .percent-txt {
-        width: 40px;
-        text-align: center;
-        color: #fff;
-      }
-      .import-export {
-        display: inline-flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .popup {
-        position: absolute;
-        top: 40px;
-        right: 0;
-        background: #555;
-        border: 1px solid #777;
-        padding: 8px;
-        border-radius: 4px;
-        z-index: 10;
-      }
+      
     </style>
   </head>
+
   <body>
     <div id="previewWrapper">
       <div id="msg8">Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to 512x384</div>
       <img id="previewImg" src="" alt="Preview" />
     </div>
+
     <div id="controls">
-      <button id="scaleDown" class="control-button" aria-label="Zoom out">
-        <img class="icon" src="ui-v2/img/search-minus-24-outlined.svg" alt="" />
-      </button>
-      <div class="scale-label" id="scaleLabel">3x</div>
-      <button id="scaleUp" class="control-button" aria-label="Zoom in">
-        <img class="icon" src="ui-v2/img/search-plus-24-outlined.svg" alt="" />
-      </button>
-      <div class="options-menu" style="position: relative">
-        <button id="optionsBtn" class="control-button" aria-label="Options">
-          <img class="icon" src="ui-v2/img/options-24-outlined.svg" alt="" />
-        </button>
-        <div id="sysMenu" class="popup hidden">
-          <div style="margin-bottom: 4px; color: #fff">Your System Scale</div>
-          <select
-            id="sysScaleSel"
-            class="dithering-select"
-            style="width: 120px"
-          >
-            <option value="1.00">100%</option>
-            <option value="1.25">125%</option>
-            <option value="1.50" selected>150%</option>
-            <option value="1.75">175%</option>
-            <option value="2.00">200%</option>
-            <option value="2.25">225%</option>
-            <option value="2.50">250%</option>
-          </select>
-        </div>
-      </div>
-      <div class="dithering-wrap">
-        <label
-          for="ditherGroupSel"
-          class="dithering-label"
-          style="color: #fff; width: 58px; text-align: right"
-          >Dithering:</label
+      <sp-button
+        id="scaleDown"
+        treatment="fill"
+        variant="primary"
+        class="control-button"
+        aria-label="Zoom out"
+      >
+        <img class="icon" src="img/zoom-minus.svg" alt="" />
+      </sp-button>
+      <span id="scaleLabel">3x</span>
+      <button id="scaleUp">+</button>
+
+      <label>
+        System Scale
+        <select id="sysScaleSel">
+          <option value="1.00">100%</option>
+          <option value="1.25">125%</option>
+          <option value="1.50" selected>150%</option>
+          <option value="1.75">175%</option>
+          <option value="2.00">200%</option>
+          <option value="2.25">225%</option>
+          <option value="2.50">250%</option>
+        </select>
+      </label>
+
+      <label>
+        Dithering
+        <select id="ditherAlgSel" style="width: 170px">
+          <option value="checker2x1" style="font-size: 12px">
+            Сheckerboard 2x1
+          </option>
+          <option value="bayer2">Bayer 2×2</option>
+          <option value="bayer4">Bayer 4×4</option>
+          <option value="bayer">Bayer 8×8</option>
+          <!--<option value="dotdiff">Dot diffusion (true)</option>-->
+          <option value="fs">Floyd–Steinberg</option>
+          <option value="jjn">Jarvis–Judice–Ninke</option>
+          <option value="sierra3">Sierra-3</option>
+          <option value="stucki">Stucki</option>
+          <option value="burkes">Burkes</option>
+          <option value="atkinson">Atkinson</option>
+          <option value="bluenoise">Blue-noise</option>
+          <option value="linediag7x7" selected>Line-diag 7×7</option>
+          <option value="clustered">Clustered ordered</option>
+          <!--<option value="random">Random threshold</option>-->
+        </select>
+      </label>
+
+      <label style="display: flex; flex-direction: row; gap: 4px">
+        Amount
+        <sp-slider
+          id="ditherStrength"
+          min="0"
+          max="100"
+          step="1"
+          value="50"
+          variant="filled"
+          style="width: 180px"
+          show-value
         >
-        <div class="select-wrapper">
-          <select
-            id="ditherGroupSel"
-            class="dithering-select"
-            style="width: 120px"
-          >
-            <option value="ordered">Ordered</option>
-            <option value="diffusion">Diffusion</option>
-            <option value="pattern">Pattern</option>
-          </select>
-          <img
-            class="chevron"
-            src="ui-v2/img/chevron-bottom-24-outlined.svg"
-            alt=""
-          />
-        </div>
-      </div>
-      <div class="dithering-wrap">
-        
-        <div class="select-wrapper">
-          <select id="ditherAlgSel" class="dithering-select"></select>
-          <img
-            class="chevron"
-            src="ui-v2/img/chevron-bottom-24-outlined.svg"
-            alt=""
-          />
-        </div>
-      </div>
-      <button id="applyBtn" class="apply-btn">Paste</button>
-      <div class="dithering-amount">
-        <label
-          for="ditherStrength"
-          class="dithering-label"
-          style="color: #fff; width: 58px; text-align: right"
-          >Amount:</label
-        >
-        <div class="slider-base">
-          <input
-            type="range"
-            id="ditherStrength"
-            min="0"
-            max="100"
-            value="50"
-          />
-        </div>
-        <div class="percent-txt" id="ditherLabel">50%</div>
-      </div>
-      <button id="brightBtn" class="control-button" aria-label="Brightness">
-        <img
-          id="brightIcon"
-          class="icon"
-          src="ui-v2/img/brightness-high-24-outlined.svg"
-          alt=""
-        />
-      </button>
-      <button id="flashBtn" class="control-button" aria-label="Flash">
-        <img
-          id="flashIcon"
-          class="icon"
-          src="ui-v2/img/lightning-off-24-outlined.svg"
-          alt=""
-        />
-      </button>
-      <hr class="separator" style="height: 32px; border-left: 1px solid #777" />
-      <div class="import-export">
-        <button id="importBtn" class="import-export-btn">
-          <img
-            class="icon"
-            src="ui-v2/img/cassette-24-import.svg"
-            alt=""
-          /><span>Import</span>
-        </button>
-        <button id="saveScrBtn" class="import-export-btn">
-          <img
-            class="icon"
-            src="ui-v2/img/cassette-24-export.svg"
-            alt=""
-          /><span>Export</span>
-        </button>
-      </div>
+        </sp-slider>
+        <span id="ditherLabel">50%</span>
+      </label>
+
+      <button id="applyBtn">Paste</button>
+      <label>
+        Bright
+        <select id="brightModeSel">
+          <option value="on">On</option>
+          <option value="off">Off</option>
+          <option value="auto" selected>Auto</option>
+        </select>
+      </label>
+      <label
+        title="1. To activate the flash bit, put pixels in a layer named FLASH.&#10;2. If a block contains only one color, the second color will be taken from this layer.&#10;3. Hide the FLASH layer so it does not affect the visible result."
+      >
+        <input type="checkbox" id="flashChk" /> Flash
+      </label>
+      <button id="saveScrBtn">Save .scr</button>
     </div>
+
     <script src="main.js"></script>
   </body>
 </html>

@@ -51,6 +51,7 @@ function encodeTile(indexed, tx = 0, ty = 0) {
         }
         fillByte = ones > zeros ? 0xFF : 0x00;
       }
+      fillByte = 0xFF;
 
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;

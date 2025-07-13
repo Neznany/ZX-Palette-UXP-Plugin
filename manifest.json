@@ -9,7 +9,10 @@
     "minVersion": "23.3.0"
   },
     "requiredPermissions": {
-    "localFileSystem": "request"
+    "localFileSystem": "request",
+    "network": {
+    "domains": ["unpkg.com"]
+  }
   },
   "entrypoints": [
     {
