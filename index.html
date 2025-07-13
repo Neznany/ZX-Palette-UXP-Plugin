@@ -32,6 +32,7 @@
       }
 
       #msg8 {
+        position: absolute;
         color: #fff;
         padding: 6px 8px;
         font-size: 12px;
@@ -63,6 +64,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: relative;
       }
 
       #previewImg {
@@ -73,6 +75,7 @@
         /* вже є */
         display: block;
         border: none;
+        position: relative;
         z-index: 1;
       }
 
@@ -130,8 +133,7 @@
     <div id="previewWrapper">
       <img id="previewImg" src="" alt="Preview" />
       <div id="msg8">
-        Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to
-        512x384
+        Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to 512x384
       </div>
     </div>
 

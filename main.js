@@ -302,16 +302,17 @@ async function updatePreview(cacheOnly = false) {
       const docW = Math.round(+d.width),
         docH = Math.round(+d.height);
       const modeStr = String(d.mode || "").toLowerCase();
-      const bits = d.bitsPerChannel || d.depth || d.bits || 8;
+      const bits = d.bitsPerChannel;
 
       if (docW % 8 ||
         docH % 8 ||
         docW > 512 ||
         docH > 384 ||
-        bits !== 8 ||
+        !/8/.test(bits) || // d.bitsPerChannel returns string "bitDepth8"
         !/rgb/.test(modeStr)
       ) {
         img.src = "";
+        console.log(modeStr, bits, docW, docH);
         return;
       }
 
