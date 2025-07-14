@@ -1,279 +1,279 @@
 <!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <title>ZX Palette</title>
-    <script
-      type="module"
-      src="https://unpkg.com/@spectrum-web-components/bundle/elements.js?module"
-    ></script>
-    <script type="module">
-      import "@spectrum-web-components/theme/express/scale-medium.js";
-      import "@spectrum-web-components/slider/sp-slider.js";
-    </script>
 
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-        background: #444;
-        color: #ddd;
-        font-family: "Inter", Helvetica;
-        font-weight: 400;
-        font-size: 12px;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>ZX Palette</title>
 
-      body {
-        display: flex;
-        flex-direction: column;
-      }
+  <!-- Підключаємо Spectrum Web Components bundle -->
+  <script type="module" src="https://unpkg.com/@spectrum-web-components/bundle/elements.js?module"></script>
+  <!-- Обов’язково імпортуємо тему та компонент action-button і sp-icon -->
+  <script type="module">
+    import '@spectrum-web-components/theme/sp-theme.js';
+    import '@spectrum-web-components/theme/express/scale-medium.js';
+    import '@spectrum-web-components/theme/src/express/themes.js';
+    import '@spectrum-web-components/action-button/sp-action-button.js';
+    import '@spectrum-web-components/icon/sp-icon.js';
+    import '@spectrum-web-components/action-menu/sp-action-menu.js';
+    import '@spectrum-web-components/menu/sp-menu.js';
+    import '@spectrum-web-components/menu/sp-menu-item.js';
+    import '@spectrum-web-components/overlay/overlay-root.js';
+  </script>
+  
 
-      #msg8 {
-        position: absolute;
-        color: #fff;
-        padding: 6px 8px;
-        font-size: 12px;
-        text-align: center;
-        font-family: "Inter", Helvetica;
-        font-weight: 400;
-        pointer-events: none;
-        z-index: 0;
-      }
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #444;
+      color: #ddd;
+      font-family: "Inter", Helvetica;
+      font-weight: 400;
+      font-size: 12px;
+    }
 
-      .hidden {
-        display: none;
-      }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
 
-      /* Preview area grows, scrolls if content overflows */
-      #previewWrapper {
-        flex: 1 1 auto;
-        overflow: auto;
-        border: none;
-        margin: 2px;
-        background: #000;
-        color: #fff;
-        padding: 6px 8px;
-        font-size: 12px;
-        text-align: center;
-        font-family: "Inter", Helvetica;
-        font-weight: 400;
-        /* optional frame background */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-      }
+    #invalidMsg {
+      background: #500;
+      position: absolute;
+      color: #fff;
+      padding: 6px 10px;
+      font-size: 12px;
+      text-align: center;
+      font-family: "Inter", Helvetica;
+      font-weight: 400;
+      pointer-events: none;
+      z-index: 1;
+    }
 
-      #previewImg {
-        image-rendering: pixelated;
-        image-rendering: crisp-edges;
-        /* Fallback лише для IE */
-        -ms-interpolation-mode: nearest-neighbor;
-        /* вже є */
-        display: block;
-        border: none;
-        position: relative;
-        z-index: 1;
-      }
+    .hidden {
+      display: none;
+    }
 
-      /* Controls pinned at bottom */
-      #controls {
-        flex: 0 0 auto;
-        padding: 2px 8px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        align-items: center;
-        border-top: 1px solid #999;
-        background: #555;
-      }
+    /* Preview area grows, scrolls if content overflows */
+    #previewWrapper {
+      flex: 1 1 auto;
+      overflow: auto;
+      border: none;
+      margin: 2px;
+      background: #000;
+      color: #fff;
+      padding: 6px 8px;
+      font-size: 12px;
+      text-align: center;
+      font-family: "Inter", Helvetica;
+      font-weight: 400;
+      /* optional frame background */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
 
-      button,
-      option {
-        font-family: "Inter", Helvetica;
-        font-weight: 400;
-        padding: 1px 2px;
-        margin: 4px 8px;
-        border-radius: 4px;
-        background: #444;
-        color: #ddd;
-        border: 1px solid #666;
-        cursor: pointer;
-      }
+    #previewImg {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      /* Fallback лише для IE */
+      -ms-interpolation-mode: nearest-neighbor;
+      /* вже є */
+      display: block;
+      border: none;
+      position: relative;
+      z-index: 0;
+    }
 
-      select {
-        appearance: none;
-      }
+    /* Controls pinned at bottom */
+    #controls {
+      flex: 0 0 auto;
+      padding: 2px 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      border-top: 1px solid #999;
+      background: #555;
+    }
 
-      .control-button,
-      .apply-btn,
-      .import-export-btn {
-        width: 32px;
-        height: 32px;
-        background: #4e4e4e;
-        border: 1px solid #6e6e6e;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0px 8px 0px 0px;
-        cursor: pointer;
-      }
+    button,
+    option {
+      font-family: "Inter", Helvetica;
+      font-weight: 400;
+      padding: 1px 2px;
+      margin: 4px 8px;
+      border-radius: 4px;
+      background: #444;
+      color: #ddd;
+      border: 1px solid #666;
+      cursor: pointer;
+    }
 
-      sp-button {
-        --spectrum-global-dimension-size-200: 16px; /* padding */
-        --spectrum-button-m-width: 32px;
-      }
+    select {
+      appearance: none;
+    }
 
-      .icon-button {
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        border: none;
-        background: #4e4e4e;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
+    .control-button,
+    .apply-btn,
+    .import-export-btn {
+      width: 32px;
+      height: 32px;
+      background: #4e4e4e;
+      border: 1px solid #6e6e6e;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0px 8px 0px 8px;
+      cursor: pointer;
+    }
 
-      /* якщо треба hover/focus стилі */
-      .icon-button:hover {
-        background: #5e5e5e;
-      }
-      .icon-button:focus {
-        outline: 2px solid #aaf;
-      }
+    sp-button {
+      --spectrum-global-dimension-size-200: 16px;
+      /* padding */
+      --spectrum-button-m-width: 32px;
+    }
 
-      .my-icon-btn::part(base) {
-        min-width: 0 !important;
-        width: 32px !important;
-        height: 32px !important;
-        padding: 0 !important;
-        --spectrum-alias-border-width: 0px !important;
-        background: #4e4e4e !important;
-      }
-    </style>
-  </head>
+    .icon-button {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      background: #4e4e4e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
 
-  <body>
-    <div id="msg8" class="hidden">
-      The document size must be a multiple of 8, max 512x384
+    /* якщо треба hover/focus стилі */
+    .icon-button:hover {
+      background: #5e5e5e;
+    }
+
+    .icon-button:focus {
+      outline: 2px solid #aaf;
+    }
+
+    /* Підганяємо самі кнопки під 32×32 і тонку рамку */
+    sp-action-button#scaleDown::part(base),
+    sp-action-button#scaleUp::part(base) {
+      min-width: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 4px;
+      /* тонка, неяскрава рамка */
+      --spectrum-alias-border-width: 1px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="previewWrapper">
+    <img id="previewImg" src="" alt="Preview" />
+    <div id="invalidMsg" class="hidden">
+      Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to
+      512x384
     </div>
+  </div>
 
-    <div id="previewWrapper">
-      <img id="previewImg" src="" alt="Preview" />
-      <div id="msg8">
-        Only 8-bit RGB mode is supported, dimensions are multiples of 8 up to
-        512x384
-      </div>
-    </div>
+  <sp-theme system="express" color="dark" scale="medium">
+  <overlay-root></overlay-root>
+  <div id="controls">
+    
+    <sp-action-button class="control-button" id="scaleDown" icon-only aria-label="Зменшити масштаб">
+      <img class="icon" src="img/zoom-minus.svg" alt="" />
+    </sp-action-button>
 
-    <div id="controls">
-      <sp-button
-        id="scaleDown"
-        treatment="fill"
-        class="control-button"
-        aria-label="Zoom out"
-        variant="quiet"
-        size="s"
-        icon="ui:edit"
-        icon-only
-      >
-        <img class="icon" src="img/zoom-minus.svg" alt="" />
-      </sp-button>
-      <span id="scaleLabel">3x</span>
-      <button id="scaleUp" class="icon-button">
-        <img src="./img/zoom-plus.png" width="16" height="16" alt="Zoom in" />
-      </button>
-      <sp-button
-        size="s"
-        variant="quiet"
-        icon-only
-        class="my-icon-btn"
-        aria-label="Zoom in"
-      >
-        <img
-          slot="icon"
-          src="./img/zoom-plus.svg"
-          width="16"
-          height="16"
-          alt=""
-        />
-      </sp-button>
+    <span id="scaleLabel">3x</span>
 
-      <label>
-        System Scale
-        <select id="sysScaleSel">
-          <option value="1.00">100%</option>
-          <option value="1.25">125%</option>
-          <option value="1.50" selected>150%</option>
-          <option value="1.75">175%</option>
-          <option value="2.00">200%</option>
-          <option value="2.25">225%</option>
-          <option value="2.50">250%</option>
-        </select>
-      </label>
+    <sp-action-button class="control-button" id="scaleUp" icon-only aria-label="Збільшити масштаб">
+      <img class="icon" src="img/zoom-plus.svg" alt="" />
+    </sp-action-button>
 
-      <label>
-        Dithering
-        <select id="ditherAlgSel" style="width: 170px">
-          <option value="checker2x1" style="font-size: 12px">
-            Сheckerboard 2x1
-          </option>
-          <option value="bayer2">Bayer 2×2</option>
-          <option value="bayer4">Bayer 4×4</option>
-          <option value="bayer">Bayer 8×8</option>
-          <!--<option value="dotdiff">Dot diffusion (true)</option>-->
-          <option value="fs">Floyd–Steinberg</option>
-          <option value="jjn">Jarvis–Judice–Ninke</option>
-          <option value="sierra3">Sierra-3</option>
-          <option value="stucki">Stucki</option>
-          <option value="burkes">Burkes</option>
-          <option value="atkinson">Atkinson</option>
-          <option value="bluenoise">Blue-noise</option>
-          <option value="linediag7x7" selected>Line-diag 7×7</option>
-          <option value="clustered">Clustered ordered</option>
-          <!--<option value="random">Random threshold</option>-->
-        </select>
-      </label>
 
-      <label style="display: flex; flex-direction: row; gap: 4px">
-        Amount
-        <sp-slider
-          id="ditherStrength"
-          min="0"
-          max="100"
-          step="1"
-          value="50"
-          variant="filled"
-          style="width: 180px"
-          show-value
-        >
-        </sp-slider>
-        <span id="ditherLabel">50%</span>
-      </label>
+    <label>
+      System Scale
+      <select id="sysScaleSel">
+        <option value="1.00">100%</option>
+        <option value="1.25">125%</option>
+        <option value="1.50" selected>150%</option>
+        <option value="1.75">175%</option>
+        <option value="2.00">200%</option>
+        <option value="2.25">225%</option>
+        <option value="2.50">250%</option>
+      </select>
+    </label>
+    
 
-      <button id="applyBtn">Paste</button>
-      <label>
-        Bright
-        <select id="brightModeSel">
-          <option value="on">On</option>
-          <option value="off">Off</option>
-          <option value="auto" selected>Auto</option>
-        </select>
-      </label>
-      <label
-        title="1. To activate the flash bit, put pixels in a layer named FLASH.&#10;2. If a block contains only one color, the second color will be taken from this layer.&#10;3. Hide the FLASH layer so it does not affect the visible result."
-      >
-        <input type="checkbox" id="flashChk" /> Flash
-      </label>
-      <button id="saveScrBtn">Save .scr</button>
-    </div>
+   <!-- <sp-action-menu selects="single">
+      <span slot="label">System Scale</span>
+      <sp-menu-item value="1.00">100%</sp-menu-item>
+      <sp-menu-item value="1.25">125%</sp-menu-item>
+      <sp-menu-item value="1.50">150%</sp-menu-item>
+      <sp-menu-item value="1.75">175%</sp-menu-item>
+      <sp-menu-item value="2.00">200%</sp-menu-item>
+      <sp-menu-item value="2.25">225%</sp-menu-item>
+      <sp-menu-item value="2.50" disabled>250%</sp-menu-item>
+    </sp-action-menu> -->
 
-    <script src="main.js"></script>
-  </body>
+    <label>
+      Dithering
+      <select id="ditherAlgSel" style="width: 170px">
+        <option value="checker2x1" style="font-size: 12px">
+          Сheckerboard 2x1
+        </option>
+        <option value="bayer2">Bayer 2×2</option>
+        <option value="bayer4">Bayer 4×4</option>
+        <option value="bayer">Bayer 8×8</option>
+        <!--<option value="dotdiff">Dot diffusion (true)</option>-->
+        <option value="fs">Floyd–Steinberg</option>
+        <option value="jjn">Jarvis–Judice–Ninke</option>
+        <option value="sierra3">Sierra-3</option>
+        <option value="stucki">Stucki</option>
+        <option value="burkes">Burkes</option>
+        <option value="atkinson">Atkinson</option>
+        <option value="bluenoise">Blue-noise</option>
+        <option value="linediag7x7" selected>Line-diag 7×7</option>
+        <option value="clustered">Clustered ordered</option>
+        <!--<option value="random">Random threshold</option>-->
+      </select>
+    </label>
+
+    <label style="display: flex; flex-direction: row; gap: 4px">
+      Amount
+      <sp-slider id="ditherStrength" min="0" max="100" step="1" value="50" variant="filled" style="width: 180px"
+        show-value>
+      </sp-slider>
+      <span id="ditherLabel">50%</span>
+    </label>
+
+    <button id="applyBtn">Paste</button>
+    <label>
+      Bright
+      <select id="brightModeSel">
+        <option value="on">On</option>
+        <option value="off">Off</option>
+        <option value="auto" selected>Auto</option>
+      </select>
+    </label>
+    <label
+      title="1. To activate the flash bit, put pixels in a layer named FLASH.&#10;2. If a block contains only one color, the second color will be taken from this layer.&#10;3. Hide the FLASH layer so it does not affect the visible result.">
+      <input type="checkbox" id="flashChk" /> Flash
+    </label>
+    <button id="saveScrBtn">Save .scr</button>
+  </div>
+  </sp-theme>
+  
+  <script src="main.js"></script>
+
+</body>
+
 </html>

@@ -12,7 +12,7 @@ const { getRgbaPixels, ensureFlashLayer } = require("./utils/utils");
 
 // DOM elements
 const img = document.getElementById("previewImg");
-const msg = document.getElementById("msg8");
+const msg = document.getElementById("invalidMsg");
 const btnDown = document.getElementById("scaleDown");
 const btnUp = document.getElementById("scaleUp");
 const lblScale = document.getElementById("scaleLabel");
@@ -24,6 +24,7 @@ let scale = 3;
 let busy = false;
 let lastW = 0,
   lastH = 0;
+let invalid = false;
 // Initialize selectedAlg from saved settings or fallback to first available
 let selectedAlg = (function () {
   const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
@@ -308,7 +309,7 @@ async function updatePreview(cacheOnly = false) {
       const modeStr = String(d.mode || "").toLowerCase();
       const bits = d.bitsPerChannel;
 
-      const invalid = docW % 8 ||
+      invalid = docW % 8 ||
         docH % 8 ||
         docW > 512 ||
         docH > 384 ||
@@ -320,6 +321,7 @@ async function updatePreview(cacheOnly = false) {
         docW !== lastDocWidth || docH !== lastDocHeight;
 
       if (invalid) {
+        if (msg) msg.classList.remove("hidden");
         img.src = "";
         thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
         pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
@@ -328,6 +330,8 @@ async function updatePreview(cacheOnly = false) {
         lastDocWidth = docW;
         lastDocHeight = docH;
         return;
+      } else {
+        if (msg) msg.classList.add("hidden");
       }
 
       const docId = d.id;
