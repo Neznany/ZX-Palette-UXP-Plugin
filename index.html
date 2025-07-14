@@ -5,20 +5,8 @@
   <meta charset="UTF-8" />
   <title>ZX Palette</title>
 
-  <!-- Підключаємо Spectrum Web Components bundle -->
-  <script type="module" src="https://unpkg.com/@spectrum-web-components/bundle/elements.js?module"></script>
-  <!-- Обов’язково імпортуємо тему та компонент action-button і sp-icon -->
-  <script type="module">
-    import '@spectrum-web-components/theme/sp-theme.js';
-    import '@spectrum-web-components/theme/express/scale-medium.js';
-    import '@spectrum-web-components/theme/src/express/themes.js';
-    import '@spectrum-web-components/action-button/sp-action-button.js';
-    import '@spectrum-web-components/icon/sp-icon.js';
-    import '@spectrum-web-components/action-menu/sp-action-menu.js';
-    import '@spectrum-web-components/menu/sp-menu.js';
-    import '@spectrum-web-components/menu/sp-menu-item.js';
-    import '@spectrum-web-components/overlay/overlay-root.js';
-  </script>
+
+
   
 
   <style>
@@ -171,6 +159,54 @@
       /* тонка, неяскрава рамка */
       --spectrum-alias-border-width: 1px;
     }
+    /* Фіксуємо ширину picker-а */
+    sp-picker#sysScalePicker {
+      width: 100px;
+      margin: 8px;
+    }
+ 
+    /* Контейнер має position: relative, щоб випадашка була прив’язана до нього */
+    #scaleWrapper {
+      position: relative;
+      display: inline-block;
+      margin: 8px;
+    }
+
+    /* Ікон-кнопка 32×32 */
+    #scaleBtn::part(base) {
+      min-width: 32px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      --spectrum-alias-border-width: 1px;
+    }
+
+    /* Сам список меню: абсолютно під кнопкою, спочатку сховано */
+    #scaleMenu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      display: none;
+      background: var(--spectrum-global-color-gray-75);      /* фон темної теми */
+      border: 1px solid var(--spectrum-global-color-gray-600);
+      border-radius: 4px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+      width: max-content;
+    }
+
+    /* Коли він має клас show — показуємо */
+    #scaleMenu.show {
+      display: block;
+    }
+
+    /* Пункти меню (тут можна додати кастомні паддінги) */
+    #scaleMenu sp-menu {
+      padding: 4px 0;
+    }
+    #scaleMenu sp-menu-item {
+      padding: 4px 12px;
+    }
   </style>
 </head>
 
@@ -210,8 +246,36 @@
         <option value="2.25">225%</option>
         <option value="2.50">250%</option>
       </select>
+      s
     </label>
-    
+        <sp-picker id="sysScalePicker" label="System Scale">
+      <sp-menu slot="options">
+        <sp-menu-item value="1.00">100%</sp-menu-item>
+        <sp-menu-item value="1.25">125%</sp-menu-item>
+        <sp-menu-item value="1.50" selected>150%</sp-menu-item>
+        <sp-menu-item value="1.75">175%</sp-menu-item>
+        <sp-menu-item value="2.00">200%</sp-menu-item>
+        <sp-menu-item value="2.25">225%</sp-menu-item>
+        <sp-menu-item value="2.50">250%</sp-menu-item>
+      </sp-menu>
+    </sp-picker>
+
+    <div id="scaleWrapper">
+      <!-- кнопка, всередині <img> гарантовано працює -->
+      <button id="scaleBtn" class="icon-button" aria-label="System Scale">
+        <img src="img/zoom-settings.svg" width="16" height="16" alt="⚙">
+      </button>
+      <!-- меню з sp-menu/sp-menu-item -->
+      <div id="scaleMenu">
+        <sp-menu id="scaleMenuList">
+          <sp-menu-item value="1.00">100%</sp-menu-item>
+          <sp-menu-item value="1.25">125%</sp-menu-item>
+          <sp-menu-item value="1.50">150%</sp-menu-item>
+          <sp-menu-item value="1.75">175%</sp-menu-item>
+          <sp-menu-item value="2.00">200%</sp-menu-item>
+        </sp-menu>
+      </div>
+    </div>
 
    <!-- <sp-action-menu selects="single">
       <span slot="label">System Scale</span>
