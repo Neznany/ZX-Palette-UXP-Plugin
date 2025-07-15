@@ -1,0 +1,26 @@
+{
+  "name": "zx-uxp-plugin",
+  "version": "1.0.0",
+  "main": "main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neznany/ZX-Palette-UXP-Plugin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Neznany/ZX-Palette-UXP-Plugin/issues"
+  },
+  "homepage": "https://github.com/Neznany/ZX-Palette-UXP-Plugin#readme",
+  "description": "",
+  "dependencies": {
+    "@spectrum-web-components/bundle": "^1.7.0"
+  }
+}
