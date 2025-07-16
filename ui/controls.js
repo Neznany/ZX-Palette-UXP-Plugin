@@ -17,6 +17,11 @@ function getDomElements() {
     brightSel: document.getElementById("brightModeSel"),
     flashChk: document.getElementById("flashChk"),
     saveScrBtn: document.getElementById("saveScrBtn"),
+    // Preferences dialog elements
+    btnPrefs: document.getElementById("openPrefs"),
+    prefsDialog: document.getElementById("prefsDialog"),
+    pickerDialog: document.getElementById("scalePicker"),
+    customField: document.getElementById("customField"),
   };
 }
 
@@ -60,6 +65,11 @@ function setupControls({
     brightSel,
     flashChk,
     saveScrBtn,
+    // Preferences dialog elements
+    btnPrefs,
+    prefsDialog,
+    pickerDialog,
+    customField,
   } = getDomElements();
 
   // Відновлення налаштувань при старті
@@ -237,6 +247,51 @@ function setupControls({
       updatePreview();
     }
   });
+
+  // Preferences dialog handling
+  btnPrefs?.addEventListener("click", async () => {
+    if (!prefsDialog?.uxpShowModal) {
+      alert("Preferences dialog not supported in this host.");
+      return;
+    }
+    const result = await prefsDialog.uxpShowModal({
+      title: "System Scale Preferences",
+      resize: "none",
+      size: { width: 300, height: 300 }
+    });
+    if (result === 'ok') {
+      let value = pickerDialog.value;
+      if (value === 'custom') {
+        const num = Number(customField.value);
+        if (Number.isNaN(num) || num < 100 || num > 500) {
+          alert("Please enter a number between 100 and 500.");
+          return;
+        }
+        value = num;
+      }
+      // Apply to system scale selector and trigger
+      selSys.value = ssVal.toString();
+      selSys.dispatchEvent(new Event('change'));
+    }
+  });
+
+  pickerDialog?.addEventListener("change", () => {
+    if (pickerDialog.value === 'custom') {
+      customField.style.display = 'block';
+      customField.focus();
+    } else {
+      customField.style.display = 'none';
+      customField.value = '';
+    }
+  });
+
+    // Attach OK/Cancel handlers to the dialog buttons
+  if (prefsDialog) {
+    const okBtn = prefsDialog.querySelector('sp-button[variant="primary"]');
+    const cancelBtn = prefsDialog.querySelector('sp-button[variant="secondary"]');
+    okBtn?.addEventListener('click', () => prefsDialog.close('ok'));
+    cancelBtn?.addEventListener('click', () => prefsDialog.close('cancel'));
+  }
 }
 
 
