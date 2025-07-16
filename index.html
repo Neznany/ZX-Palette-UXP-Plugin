@@ -110,14 +110,19 @@
     .import-export-btn {
       width: 32px;
       height: 32px;
-      background: #4e4e4e;
-      border: 1px solid #6e6e6e;
+      /*background: #4e4e4e;*/
+      border: 0px solid #6e6e6e;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0px 8px 0px 8px;
       cursor: pointer;
+    }
+
+    .sysScPick{
+      background: #4e4e4e;
+      border: 0px solid #6e6e6e;
     }
 
     sp-button {
@@ -247,7 +252,7 @@
       </select>
       s
     </label>
-        <sp-picker id="sysScalePicker" label="System Scale">
+        <sp-picker class="sysScPick" id="sysScalePicker" label="System Scale">
       <sp-menu slot="options">
         <sp-menu-item value="1.00">100%</sp-menu-item>
         <sp-menu-item value="1.25">125%</sp-menu-item>
