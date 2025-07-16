@@ -305,7 +305,7 @@ async function updatePreview(cacheOnly = false) {
         return;
       }
       const docW = Math.round(+d.width),
-        docH = Math.round(+d.height);
+            docH = Math.round(+d.height);
       const modeStr = String(d.mode || "").toLowerCase();
       const bits = d.bitsPerChannel;
 
@@ -362,11 +362,12 @@ async function updatePreview(cacheOnly = false) {
       lastDocHeight = docH;
     }
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
-    if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
     const sysScale = parseFloat(selSys.value) || 1;
     const s = getScale();
     img.style.width = (thumbCache.w * s / 4) / sysScale + "px";
     img.style.height = (thumbCache.h * s / 4) / sysScale + "px";
+    if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
+
   } catch (e) {
     console.error(e);
     if (e && e.message && /modal/i.test(e.message)) {
