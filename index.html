@@ -218,10 +218,8 @@
     </sp-picker>
     -->
 
-    <sp-switch size="l" emphasized>Flash</sp-switch>
-
     <label>
-      Dithering
+      Dithering: 
       <div class="selectFrame">
         <select id="ditherAlgSel" style="width: 170px">
           <option value="checker2x1" style="font-size: 12px">Сheckerboard 2x1 </option>
@@ -263,9 +261,10 @@
         </select>
       </div>
     </label>
+
     <label
       title="1. To activate the flash bit, put pixels in a layer named FLASH.&#10;2. If a block contains only one color, the second color will be taken from this layer.&#10;3. Hide the FLASH layer so it does not affect the visible result.">
-      <sp-checkbox id="flashChk" label="Flash">Flash</sp-checkbox>
+      <sp-switch emphasized id="flashChk" label="Flash">Flash</sp-switch>
     </label>
     <sp-action-button id="saveScrBtn">Export</sp-action-button>
   </div>

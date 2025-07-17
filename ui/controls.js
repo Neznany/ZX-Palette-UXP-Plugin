@@ -266,7 +266,7 @@ function setupControls({
       const raw = prevScale * 100;
       const current = parseFloat(raw.toFixed(1)) || 100;
       const presetVals = [100, 125, 150, 175, 200, 225, 250];
-      const match = presetVals.find(p => Math.abs(p - raw) < 0.001);
+      const match = presetVals.find(p => Math.abs(p - raw) < 0.01);
       const target = match ? String(match) : "custom";
       pickerDialog.querySelectorAll("sp-menu-item").forEach((i) => i.removeAttribute("selected"));
       const item = pickerDialog.querySelector(`sp-menu-item[value="${target}"]`);
