@@ -52,7 +52,6 @@ function encodeTile(indexed, tx = 0, ty = 0) {
         fillByte = ones > zeros ? 0xFF : 0x00;
       }
       
-      fillByte = 0xFF; //тимчасовий заповнювач для тестування 
 
       for (let dy = 0; dy < 8; dy++) {
         const y = by * 8 + dy;
@@ -90,8 +89,13 @@ const { optimizeAttributes } = require('./indexed');
 
 // Split large images into 256x192 tiles encoded as individual .scr buffers
 function encodeTiles(indexed) {
-  // tweak attributes globally before tiling
-  optimizeAttributes(indexed);
+  // tweak attributes globally before tiling (only handle fully uniform case)
+  if (indexed.attrs.every(a => a.ink === a.paper)) {
+    const paper = indexed.attrs[0].paper & 7;
+    const complement = (7 - paper) & 7;
+    for (const attr of indexed.attrs) attr.ink = complement;
+    indexed.pixels.fill(paper);
+  }
   const tilesX = Math.ceil(indexed.width / 256);
   const tilesY = Math.ceil(indexed.height / 192);
   const tiles = [];

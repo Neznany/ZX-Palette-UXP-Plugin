@@ -21,6 +21,11 @@ const btnApply = document.getElementById("applyBtn");
 
 // State
 let scale = 3;
+let systemScale = (function () {
+  const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
+  if (settings && settings.systemScale) return parseFloat(settings.systemScale) || 1;
+  return 1;
+})();
 let busy = false;
 let lastW = 0,
   lastH = 0;
@@ -99,6 +104,14 @@ function getScale() {
 }
 function setScale(v) {
   scale = v;
+}
+
+function getSystemScale() {
+  return systemScale;
+}
+
+function setSystemScale(v) {
+  systemScale = v;
 }
 function getLastDimensions() {
   return { lastW, lastH };
@@ -362,7 +375,7 @@ async function updatePreview(cacheOnly = false) {
       lastDocHeight = docH;
     }
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
-    const sysScale = parseFloat(selSys.value) || 1;
+    const sysScale = getSystemScale();
     const s = getScale();
     img.style.width = (thumbCache.w * s / 4) / sysScale + "px";
     img.style.height = (thumbCache.h * s / 4) / sysScale + "px";
@@ -459,6 +472,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePreview,
     getScale,
     setScale,
+    getSystemScale,
+    setSystemScale,
     getLastDimensions,
     setAlgorithm,
     setDitherStrength,

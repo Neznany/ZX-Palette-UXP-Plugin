@@ -185,6 +185,7 @@
     </sp-action-button>
 
 
+    <!--
     <label>
       Sys Scale
       <div class="selectFrame">
@@ -200,7 +201,7 @@
       </select>
       </div>
     </label>
-    
+
     <sp-picker class="sysScPick" id="sysScaleSel1" label="System Scale" placeholder="Sys Scale">
       <sp-menu slot="options">
         <sp-menu-item value="1.00">100%</sp-menu-item>
@@ -211,8 +212,9 @@
         <sp-menu-item value="2.00">200%</sp-menu-item>
         <sp-menu-item value="2.25">225%</sp-menu-item>
         <sp-menu-item value="2.50">250%</sp-menu-item>
-      </sp-menu>     
+      </sp-menu>
     </sp-picker>
+    -->
 
     <sp-switch size="l" emphasized>Flash</sp-switch>
  
@@ -275,10 +277,11 @@
   <!-- Меню з опціями -->
   <sp-body style="display:flex; flex-direction:column; gap:8px">
 
-      <sp-menu
-        label="sys scale"
-        style="width: 150px"
-        selects="single">
+        <sp-menu
+          id="scalePicker"
+          label="sys scale"
+          style="width: 150px"
+          selects="single">
         <sp-menu-item value="100">100%</sp-menu-item>
         <sp-menu-item value="125">125%</sp-menu-item>
         <sp-menu-item value="150">150%</sp-menu-item>
@@ -287,7 +290,7 @@
         <sp-menu-item value="225">225%</sp-menu-item>
         <sp-menu-item value="250">250%</sp-menu-item>
         <sp-menu-divider></sp-menu-divider>
-        <sp-field-label for="">Custom</sp-field-label>
+        <sp-menu-item value="custom">Custom</sp-menu-item>
         <sp-textfield
           id="customField"
           type="number"
@@ -306,15 +309,13 @@
   <!-- Кнопки підтвердження -->
   <div class="row" style="justify-content:flex-end; margin-top:20px">
     <sp-button-group>
-    <sp-button variant="secondary"
-               style="margin-right:10px"
-               onclick="prefsDialog.close('cancel')">
-      Cancel
-    </sp-button>
-    <sp-button variant="primary"
-               onclick="prefsDialog.close('ok')">
-      OK
-    </sp-button>
+      <sp-button variant="secondary"
+                 style="margin-right:10px">
+        Cancel
+      </sp-button>
+      <sp-button variant="primary">
+        OK
+      </sp-button>
     </sp-button-group>
   </div>
 </dialog>

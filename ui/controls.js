@@ -43,6 +43,8 @@ function setupControls({
   updatePreview,
   getScale,
   setScale,
+  getSystemScale,
+  setSystemScale,
   getLastDimensions,
   setAlgorithm,
   setDitherStrength,
@@ -78,7 +80,10 @@ function setupControls({
     setScale(settings.scalePreview);
     lblScale.textContent = settings.scalePreview + "x";
   }
-  if (settings.systemScale && selSys) selSys.value = settings.systemScale;
+  if (settings.systemScale) {
+    setSystemScale(parseFloat(settings.systemScale) || 1);
+    if (selSys) selSys.value = settings.systemScale;
+  }
   if (settings.ditherAlg && selAlg) selAlg.value = settings.ditherAlg;
   if (settings.brightMode && brightSel) brightSel.value = settings.brightMode;
   if (typeof settings.flashEnabled === 'boolean' && flashChk) {
@@ -96,7 +101,7 @@ function setupControls({
     saveSettings({
       ...loadSettings(),
       scalePreview: scale,
-      systemScale: selSys?.value,
+      systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.value,
       flashEnabled: flashChk?.checked
@@ -111,7 +116,7 @@ function setupControls({
       ...loadSettings(),
       ditherAlg: selAlg.value,
       scalePreview: getScale(),
-      systemScale: selSys?.value,
+      systemScale: getSystemScale(),
       brightMode: brightSel?.value,
       flashEnabled: flashChk?.checked
     });
@@ -125,7 +130,7 @@ function setupControls({
       ...loadSettings(),
       brightMode: brightSel.value,
       scalePreview: getScale(),
-      systemScale: selSys?.value,
+      systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       flashEnabled: flashChk?.checked
     });
@@ -138,7 +143,7 @@ function setupControls({
       ...loadSettings(),
       flashEnabled: flashChk.checked,
       scalePreview: getScale(),
-      systemScale: selSys?.value,
+      systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.value
     });
@@ -185,9 +190,10 @@ function setupControls({
       img.style.width = lastW / ss + "px";
       img.style.height = lastH / ss + "px";
     }
+    setSystemScale(parseFloat(selSys.value) || 1);
     saveSettings({
       ...loadSettings(),
-      systemScale: selSys.value,
+      systemScale: getSystemScale(),
       scalePreview: getScale(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.value,
@@ -254,6 +260,16 @@ function setupControls({
       alert("Preferences dialog not supported in this host.");
       return;
     }
+    if (pickerDialog) {
+      const current = Math.round(getSystemScale() * 100);
+      const preset = ["100","125","150","175","200","225","250"];
+      if (preset.includes(String(current))) {
+        pickerDialog.value = String(current);
+      } else {
+        pickerDialog.value = 'custom';
+        customField.value = String(current);
+      }
+    }
     const result = await prefsDialog.uxpShowModal({
       title: "System Scale Preferences",
       resize: "none",
@@ -262,26 +278,35 @@ function setupControls({
     if (result === 'ok') {
       let value = pickerDialog.value;
       if (value === 'custom') {
-        const num = Number(customField.value);
-        if (Number.isNaN(num) || num < 100 || num > 500) {
-          alert("Please enter a number between 100 and 500.");
-          return;
-        }
+        let num = Number(customField.value);
+        if (Number.isNaN(num)) num = 100;
+        if (num < 100) num = 100;
+        if (num > 500) num = 500;
+        customField.value = String(num);
         value = num;
       }
-      // Apply to system scale selector and trigger
-      selSys.value = ssVal.toString();
-      selSys.dispatchEvent(new Event('change'));
+      const ssVal = Number(value) / 100;
+      setSystemScale(ssVal);
+      if (selSys) {
+        selSys.value = ssVal.toString();
+        selSys.dispatchEvent(new Event('change'));
+      } else {
+        saveSettings({
+          ...loadSettings(),
+          systemScale: ssVal,
+          scalePreview: getScale(),
+          ditherAlg: selAlg?.value,
+          brightMode: brightSel?.value,
+          flashEnabled: flashChk?.checked
+        });
+        updatePreview();
+      }
     }
   });
 
   pickerDialog?.addEventListener("change", () => {
     if (pickerDialog.value === 'custom') {
-      customField.style.display = 'block';
       customField.focus();
-    } else {
-      customField.style.display = 'none';
-      customField.value = '';
     }
   });
 
