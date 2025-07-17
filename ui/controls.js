@@ -262,9 +262,13 @@ function setupControls({
     }
     if (pickerDialog) {
       const current = Math.round(getSystemScale() * 100);
-      pickerDialog.value = String(current);
-      customField.value = "";
-      customField.style.display = 'none';
+      const preset = ["100","125","150","175","200","225","250"];
+      if (preset.includes(String(current))) {
+        pickerDialog.value = String(current);
+      } else {
+        pickerDialog.value = 'custom';
+        customField.value = String(current);
+      }
     }
     const result = await prefsDialog.uxpShowModal({
       title: "System Scale Preferences",
@@ -274,11 +278,11 @@ function setupControls({
     if (result === 'ok') {
       let value = pickerDialog.value;
       if (value === 'custom') {
-        const num = Number(customField.value);
-        if (Number.isNaN(num) || num < 100 || num > 500) {
-          alert("Please enter a number between 100 and 500.");
-          return;
-        }
+        let num = Number(customField.value);
+        if (Number.isNaN(num)) num = 100;
+        if (num < 100) num = 100;
+        if (num > 500) num = 500;
+        customField.value = String(num);
         value = num;
       }
       const ssVal = Number(value) / 100;
@@ -302,11 +306,7 @@ function setupControls({
 
   pickerDialog?.addEventListener("change", () => {
     if (pickerDialog.value === 'custom') {
-      customField.style.display = 'block';
       customField.focus();
-    } else {
-      customField.style.display = 'none';
-      customField.value = '';
     }
   });
 
