@@ -260,15 +260,18 @@ function setupControls({
       alert("Preferences dialog not supported in this host.");
       return;
     }
+    const prevScale = getSystemScale();
     if (pickerDialog) {
-      const current = Math.round(getSystemScale() * 100);
+      const current = Math.round(prevScale * 100) || 100;
       const preset = ["100","125","150","175","200","225","250"];
       if (preset.includes(String(current))) {
         pickerDialog.value = String(current);
+        customField.value = String(current);
       } else {
         pickerDialog.value = 'custom';
         customField.value = String(current);
       }
+      pickerDialog.dispatchEvent(new Event('change'));
     }
     const result = await prefsDialog.uxpShowModal({
       title: "System Scale Adjustment",
@@ -290,7 +293,7 @@ function setupControls({
       if (selSys) {
         selSys.value = ssVal.toString();
         selSys.dispatchEvent(new Event('change'));
-        
+
       } else {
         saveSettings({
           ...loadSettings(),
@@ -302,8 +305,24 @@ function setupControls({
         });
         updatePreview();
       }
+    } else {
+      setSystemScale(prevScale);
+      if (selSys) {
+        selSys.value = String(prevScale);
+        selSys.dispatchEvent(new Event('change'));
+      } else {
+        updatePreview();
+      }
     }
   });
+
+  function validateCustom() {
+    const num = Number(customField.value);
+    const valid = !Number.isNaN(num) && num >= 100 && num <= 500;
+    if (!valid) customField.setAttribute('invalid', '');
+    else customField.removeAttribute('invalid');
+    return valid ? num : null;
+  }
 
   // Enable/disable customField based on picker selection
   pickerDialog?.addEventListener("change", () => {
@@ -311,9 +330,26 @@ function setupControls({
       customField.disabled = false;
       customField.style.display = '';
       customField.focus();
+      const val = validateCustom();
+      if (val !== null) {
+        setSystemScale(val / 100);
+        updatePreview();
+      }
     } else {
       customField.disabled = true;
       customField.style.display = 'none';
+      const ssVal = Number(pickerDialog.value) / 100;
+      setSystemScale(ssVal);
+      updatePreview();
+    }
+  });
+
+  customField?.addEventListener('input', () => {
+    if (pickerDialog.value !== 'custom') return;
+    const val = validateCustom();
+    if (val !== null) {
+      setSystemScale(val / 100);
+      updatePreview();
     }
   });
 
