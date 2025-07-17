@@ -255,26 +255,36 @@ function setupControls({
   });
 
   // Preferences dialog handling
-  btnPrefs?.addEventListener("click", async () => {
-    if (!prefsDialog?.uxpShowModal) {
+  let prevScale = 1;
+  btnPrefs?.addEventListener("click", () => {
+    if (!prefsDialog?.show) {
       alert("Preferences dialog not supported in this host.");
       return;
     }
+    prevScale = getSystemScale();
     if (pickerDialog) {
-      const current = Math.round(getSystemScale() * 100);
+      const current = Math.round(prevScale * 100) || 100;
       const preset = ["100","125","150","175","200","225","250"];
-      if (preset.includes(String(current))) {
-        pickerDialog.value = String(current);
+      let target = preset.includes(String(current)) ? String(current) : "custom";
+      pickerDialog.querySelectorAll("sp-menu-item").forEach((i) => i.removeAttribute("selected"));
+      const item = pickerDialog.querySelector(`sp-menu-item[value="${target}"]`);
+      if (item) item.setAttribute("selected", "");
+      pickerDialog.value = target;
+      customField.value = String(current);
+      if (target === "custom") {
+        customField.disabled = false;
+        customField.style.display = "";
+        validateCustom();
       } else {
-        pickerDialog.value = 'custom';
-        customField.value = String(current);
+        customField.disabled = true;
+        customField.style.display = "none";
       }
     }
-    const result = await prefsDialog.uxpShowModal({
-      title: "System Scale Adjustment",
-      resize: "none",
-      size: { width: 240, height: 300 }
-    });
+    prefsDialog.show();
+  });
+
+  prefsDialog?.addEventListener('close', () => {
+    const result = prefsDialog.returnValue;
     if (result === 'ok') {
       let value = pickerDialog.value;
       if (value === 'custom') {
@@ -290,7 +300,7 @@ function setupControls({
       if (selSys) {
         selSys.value = ssVal.toString();
         selSys.dispatchEvent(new Event('change'));
-        
+
       } else {
         saveSettings({
           ...loadSettings(),
@@ -302,18 +312,52 @@ function setupControls({
         });
         updatePreview();
       }
+    } else {
+      setSystemScale(prevScale);
+      if (selSys) {
+        selSys.value = String(prevScale);
+        selSys.dispatchEvent(new Event('change'));
+      } else {
+        updatePreview();
+      }
     }
   });
 
+  function validateCustom() {
+    const num = Number(customField.value);
+    const valid = !Number.isNaN(num) && num >= 100 && num <= 500;
+    if (!valid) customField.setAttribute('invalid', '');
+    else customField.removeAttribute('invalid');
+    return valid ? num : null;
+  }
+
   // Enable/disable customField based on picker selection
-  pickerDialog?.addEventListener("change", () => {
+  const onPickerChange = () => {
     if (pickerDialog.value === 'custom') {
       customField.disabled = false;
       customField.style.display = '';
       customField.focus();
+      const val = validateCustom();
+      if (val !== null) {
+        setSystemScale(val / 100);
+        updatePreview();
+      }
     } else {
       customField.disabled = true;
       customField.style.display = 'none';
+      setSystemScale(Number(pickerDialog.value) / 100);
+      updatePreview();
+    }
+  };
+  pickerDialog?.addEventListener("change", onPickerChange);
+  pickerDialog?.addEventListener("click", onPickerChange);
+
+  customField?.addEventListener('input', () => {
+    if (pickerDialog.value !== 'custom') return;
+    const val = validateCustom();
+    if (val !== null) {
+      setSystemScale(val / 100);
+      updatePreview();
     }
   });
 
