@@ -13,14 +13,14 @@ const { getRgbaPixels, ensureFlashLayer } = require("./utils/utils");
 // DOM elements
 const img = document.getElementById("previewImg");
 const msg = document.getElementById("invalidMsg");
-const btnDown = document.getElementById("scaleDown");
-const btnUp = document.getElementById("scaleUp");
-const lblScale = document.getElementById("scaleLabel");
+const btnDown = document.getElementById("zoomDown");
+const btnUp = document.getElementById("zoomUp");
+const lblZoom = document.getElementById("zoomLabel");
 const selSys = document.getElementById("sysScaleSel");
 const btnApply = document.getElementById("applyBtn");
 
 // State
-let scale = 3;
+let zoom = 3;
 let systemScale = (function () {
   const settings = (typeof loadSettings === 'function') ? loadSettings() : {};
   if (settings && settings.systemScale) return parseFloat(settings.systemScale) || 1;
@@ -99,11 +99,11 @@ function isSliderLocked() {
   return sliderDragging || Date.now() - sliderReleasedAt < 500;
 }
 
-function getScale() {
-  return scale;
+function getZoom() {
+  return zoom;
 }
-function setScale(v) {
-  scale = v;
+function setZoom(v) {
+  zoom = v;
 }
 
 function getSystemScale() {
@@ -376,7 +376,7 @@ async function updatePreview(cacheOnly = false) {
     }
     const srcB64 = flashPhase && flashEnabled ? thumbCache.on : thumbCache.off;
     const sysScale = getSystemScale();
-    const s = getScale();
+    const s = getZoom();
     img.style.width = (thumbCache.w * s / 4) / sysScale + "px";
     img.style.height = (thumbCache.h * s / 4) / sysScale + "px";
     if (srcB64) img.src = "data:image/jpeg;base64," + srcB64;
@@ -470,8 +470,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupControls({
     zxFilter,
     updatePreview,
-    getScale,
-    setScale,
+    getZoom,
+    setZoom,
     getSystemScale,
     setSystemScale,
     getLastDimensions,

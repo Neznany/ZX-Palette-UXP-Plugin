@@ -5,9 +5,9 @@ const { indexedToRgba } = require("../utils/indexed");
 
 function getDomElements() {
   return {
-    btnDown: document.getElementById("scaleDown"),
-    btnUp: document.getElementById("scaleUp"),
-    lblScale: document.getElementById("scaleLabel"),
+    btnDown: document.getElementById("zoomDown"),
+    btnUp: document.getElementById("zoomUp"),
+    lblZoom: document.getElementById("zoomLabel"),
     selSys: document.getElementById("sysScaleSel"),
     img: document.getElementById("previewImg"),
     btnApply: document.getElementById("applyBtn"),
@@ -41,8 +41,8 @@ function loadSettings() {
 function setupControls({
   zxFilter,
   updatePreview,
-  getScale,
-  setScale,
+  getZoom,
+  setZoom,
   getSystemScale,
   setSystemScale,
   getLastDimensions,
@@ -57,7 +57,7 @@ function setupControls({
   const {
     btnDown,
     btnUp,
-    lblScale,
+    lblZoom,
     selSys,
     img,
     btnApply,
@@ -76,9 +76,10 @@ function setupControls({
 
   // Відновлення налаштувань при старті
   const settings = loadSettings();
-  if (settings.scalePreview) {
-    setScale(settings.scalePreview);
-    lblScale.textContent = settings.scalePreview + "x";
+  const previewZoom = settings.zoomPreview || settings.scalePreview;
+  if (previewZoom) {
+    setZoom(previewZoom);
+    lblZoom.textContent = previewZoom + "x";
   }
   if (settings.systemScale) {
     setSystemScale(parseFloat(settings.systemScale) || 1);
@@ -94,13 +95,13 @@ function setupControls({
   // Синхронізуємо selectedAlg у main.js з UI після відновлення
   if (selAlg) setAlgorithm(selAlg.value);
 
-  // Helper to update scale label and preview
-  function updateScaleLabelAndPreview() {
-    const scale = getScale();
-    lblScale.textContent = scale + "x";
+  // Helper to update zoom label and preview
+  function updateZoomLabelAndPreview() {
+    const zoom = getZoom();
+    lblZoom.textContent = zoom + "x";
     saveSettings({
       ...loadSettings(),
-      scalePreview: scale,
+      zoomPreview: zoom,
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.value,
@@ -115,7 +116,7 @@ function setupControls({
     saveSettings({
       ...loadSettings(),
       ditherAlg: selAlg.value,
-      scalePreview: getScale(),
+      zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       brightMode: brightSel?.value,
       flashEnabled: flashChk?.checked
@@ -129,7 +130,7 @@ function setupControls({
     saveSettings({
       ...loadSettings(),
       brightMode: brightSel.value,
-      scalePreview: getScale(),
+      zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       flashEnabled: flashChk?.checked
@@ -142,7 +143,7 @@ function setupControls({
     saveSettings({
       ...loadSettings(),
       flashEnabled: flashChk.checked,
-      scalePreview: getScale(),
+      zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.value
@@ -169,17 +170,17 @@ function setupControls({
     setTimeout(() => updatePreview(), 500);
   });
 
-  // Scale Preview controls
+  // Preview Zoom controls
   btnDown?.addEventListener("click", () => {
-    let s = getScale();
-    if (s > 1) setScale(s - 1);
-    updateScaleLabelAndPreview();
+    let s = getZoom();
+    if (s > 1) setZoom(s - 1);
+    updateZoomLabelAndPreview();
   });
 
   btnUp?.addEventListener("click", () => {
-    let s = getScale();
-    if (s < 4) setScale(s + 1);
-    updateScaleLabelAndPreview();
+    let s = getZoom();
+    if (s < 4) setZoom(s + 1);
+    updateZoomLabelAndPreview();
   });
 
   // system Scale selector
@@ -194,7 +195,7 @@ function setupControls({
     saveSettings({
       ...loadSettings(),
       systemScale: getSystemScale(),
-      scalePreview: getScale(),
+      zoomPreview: getZoom(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.value,
       flashEnabled: flashChk?.checked
@@ -308,7 +309,7 @@ function setupControls({
         saveSettings({
           ...loadSettings(),
           systemScale: ssVal,
-          scalePreview: getScale(),
+          zoomPreview: getZoom(),
           ditherAlg: selAlg?.value,
           brightMode: brightSel?.value,
           flashEnabled: flashChk?.checked
@@ -374,4 +375,4 @@ function setupControls({
 }
 
 
-module.exports = { setupControls, loadSettings };
+module.exports = { setupControls, loadSettings }
