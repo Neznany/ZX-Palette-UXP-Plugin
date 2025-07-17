@@ -280,7 +280,7 @@
         <sp-menu
           id="scalePicker"
           label="sys scale"
-          style="width: 150px"
+          style="width: 200px"
           selects="single">
         <sp-menu-item value="100">100%</sp-menu-item>
         <sp-menu-item value="125">125%</sp-menu-item>
@@ -290,19 +290,16 @@
         <sp-menu-item value="225">225%</sp-menu-item>
         <sp-menu-item value="250">250%</sp-menu-item>
         <sp-menu-divider></sp-menu-divider>
-        <sp-menu-item value="custom">Custom</sp-menu-item>
-        <sp-textfield
+        <sp-menu-item value="custom" style="text-align: center; align-items: center;">Custom
+        <sp-textfield disabled quiet
           id="customField"
           type="number"
-          placeholder="Custom 100–500"
+          placeholder="100–500"
           min="100"
           max="500"
-          style="width:150px;"
-        ></sp-textfield>
+          style="width:100px;"
+        ></sp-textfield></sp-menu-item>
       </sp-menu>
- 
-
-    <!-- Текстове поле для кастомного вводу -->
 
   </sp-body>
 

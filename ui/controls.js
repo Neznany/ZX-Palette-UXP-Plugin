@@ -273,7 +273,7 @@ function setupControls({
     const result = await prefsDialog.uxpShowModal({
       title: "System Scale Preferences",
       resize: "none",
-      size: { width: 300, height: 300 }
+      size: { width: 280, height: 300 }
     });
     if (result === 'ok') {
       let value = pickerDialog.value;
