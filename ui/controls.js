@@ -325,7 +325,7 @@ function setupControls({
   });
 
   function validateCustom() {
-    const num = Number(customField.value);
+    const num = parseFloat(customField.value);
     const valid = !Number.isNaN(num) && num >= 100 && num <= 500;
     if (!valid) customField.setAttribute('invalid', '');
     else customField.removeAttribute('invalid');
