@@ -255,12 +255,13 @@ function setupControls({
   });
 
   // Preferences dialog handling
-  btnPrefs?.addEventListener("click", async () => {
-    if (!prefsDialog?.uxpShowModal) {
+  let prevScale = 1;
+  btnPrefs?.addEventListener("click", () => {
+    if (!prefsDialog?.show) {
       alert("Preferences dialog not supported in this host.");
       return;
     }
-    const prevScale = getSystemScale();
+    prevScale = getSystemScale();
     if (pickerDialog) {
       const current = Math.round(prevScale * 100) || 100;
       const preset = ["100","125","150","175","200","225","250"];
@@ -280,11 +281,11 @@ function setupControls({
       }
       pickerDialog.dispatchEvent(new Event('change'));
     }
-    const result = await prefsDialog.uxpShowModal({
-      title: "System Scale Adjustment",
-      resize: "none",
-      size: { width: 240, height: 300 }
-    });
+    prefsDialog.show();
+  });
+
+  prefsDialog?.addEventListener('close', () => {
+    const result = prefsDialog.returnValue;
     if (result === 'ok') {
       let value = pickerDialog.value;
       if (value === 'custom') {
@@ -345,11 +346,9 @@ function setupControls({
     } else {
       customField.disabled = true;
       customField.style.display = 'none';
-      const ssVal = Number(pickerDialog.value) / 100;
-      setSystemScale(ssVal);
+      setSystemScale(Number(pickerDialog.value) / 100);
       updatePreview();
     }
-
   };
   pickerDialog?.addEventListener("change", onPickerChange);
   pickerDialog?.addEventListener("click", onPickerChange);
