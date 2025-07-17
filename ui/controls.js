@@ -270,7 +270,7 @@ function setupControls({
       const item = pickerDialog.querySelector(`sp-menu-item[value="${target}"]`);
       if (item) item.setAttribute("selected", "");
       pickerDialog.value = target;
-      customField.value = String(current);
+      customField.value = current.toFixed(1);
       if (target === "custom") {
         customField.disabled = false;
         customField.style.display = "";
