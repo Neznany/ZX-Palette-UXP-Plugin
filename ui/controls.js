@@ -264,12 +264,19 @@ function setupControls({
     if (pickerDialog) {
       const current = Math.round(prevScale * 100) || 100;
       const preset = ["100","125","150","175","200","225","250"];
-      if (preset.includes(String(current))) {
-        pickerDialog.value = String(current);
-        customField.value = String(current);
+      let target = preset.includes(String(current)) ? String(current) : "custom";
+      pickerDialog.querySelectorAll("sp-menu-item").forEach((i) => i.removeAttribute("selected"));
+      const item = pickerDialog.querySelector(`sp-menu-item[value="${target}"]`);
+      if (item) item.setAttribute("selected", "");
+      pickerDialog.value = target;
+      customField.value = String(current);
+      if (target === "custom") {
+        customField.disabled = false;
+        customField.style.display = "";
+        validateCustom();
       } else {
-        pickerDialog.value = 'custom';
-        customField.value = String(current);
+        customField.disabled = true;
+        customField.style.display = "none";
       }
       pickerDialog.dispatchEvent(new Event('change'));
     }
@@ -325,7 +332,7 @@ function setupControls({
   }
 
   // Enable/disable customField based on picker selection
-  pickerDialog?.addEventListener("change", () => {
+  const onPickerChange = () => {
     if (pickerDialog.value === 'custom') {
       customField.disabled = false;
       customField.style.display = '';
@@ -342,7 +349,10 @@ function setupControls({
       setSystemScale(ssVal);
       updatePreview();
     }
-  });
+
+  };
+  pickerDialog?.addEventListener("change", onPickerChange);
+  pickerDialog?.addEventListener("click", onPickerChange);
 
   customField?.addEventListener('input', () => {
     if (pickerDialog.value !== 'custom') return;
