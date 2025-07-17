@@ -24,6 +24,22 @@
       background-color: rgba(0, 0, 0, 0.25);
     }
 
+    /* Icon base size */
+    .icon {
+      fill: currentColor;
+      width: 18px;
+      height: 18px;
+    }
+    /* Light theme: invert white icon to black */
+    html.uxp-light-theme .icon {
+      filter: invert(1) contrast(2);
+    }
+    /* Dark theme: keep white icon as is */
+    html.uxp-dark-theme .icon {
+      filter: none;
+    }
+
+
     #invalidMsg {
       background: #500;
       position: absolute;
@@ -151,10 +167,6 @@
         background-color: #E8E8E8;
       }
     }
-
-    .icon {
-      fill: currentColor;
-    }
   </style>
 </head>
 
@@ -219,10 +231,11 @@
     -->
 
     <label>
-      Dithering: 
+      Dithering:
       <div class="selectFrame">
         <select id="ditherAlgSel" style="width: 170px">
-          <option value="checker2x1" style="font-size: 12px">Сheckerboard 2x1 </option>
+          <option value="thr">Threshold</option>
+          <option value="checker2x1">Сheckerboard 2x1 </option>
           <option value="bayer2">Bayer 2×2</option>
           <option value="bayer4">Bayer 4×4</option>
           <option value="bayer">Bayer 8×8</option>
@@ -291,8 +304,8 @@
         <sp-menu-item value="custom">
           <div style="display:flex; align-items:center;">
             <span>Custom</span>
-            <sp-textfield disabled quiet id="customField" type="number" step="0.1" placeholder="100–500" min="100" max="500"
-              style="width:70px; margin: 0px 8px; padding: 0;"></sp-textfield>
+            <sp-textfield disabled quiet id="customField" type="number" step="0.1" placeholder="100–500" min="100"
+              max="500" style="width:70px; margin: 0px 8px; padding: 0;"></sp-textfield>
           </div>
         </sp-menu-item>
       </sp-menu>
@@ -300,16 +313,16 @@
     </sp-body>
 
     <!-- Кнопки підтвердження -->
-    
-      <sp-button-group style="margin: 10px;">
-        <sp-button variant="secondary" style="margin-right:10px">
-          Cancel
-        </sp-button>
-        <sp-button variant="primary">
-          OK
-        </sp-button>
-      </sp-button-group>
-    
+
+    <sp-button-group style="margin: 10px;">
+      <sp-button variant="secondary" style="margin-right:10px">
+        Cancel
+      </sp-button>
+      <sp-button variant="primary">
+        OK
+      </sp-button>
+    </sp-button-group>
+
   </dialog>
 
   <script src="main.js"></script>

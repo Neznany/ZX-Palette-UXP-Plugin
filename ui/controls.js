@@ -76,7 +76,7 @@ function setupControls({
 
   // Відновлення налаштувань при старті
   const settings = loadSettings();
-  const previewZoom = settings.zoomPreview || settings.scalePreview;
+  const previewZoom = settings.zoomPreview;
   if (previewZoom) {
     setZoom(previewZoom);
     lblZoom.textContent = previewZoom + "x";

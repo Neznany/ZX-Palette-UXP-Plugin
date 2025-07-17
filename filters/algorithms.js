@@ -1,3 +1,10 @@
+function threshold(channel, w, h, t) {
+  for (let i = 0; i < w * h; i++) {
+    const v = channel[i];
+    channel[i] = v > t * 255 ? 255 : 0;
+  }
+}
+
 // ——— Checkerboard 2x1 Dithering ———
 /**
  * Checkerboard 2x1 dithering (чергування пікселів у шаховому порядку 2x1)
@@ -500,6 +507,7 @@ function ditherLineDiag7x7(channel, w, h, t) {
 }
 
 module.exports = {
+  thr: threshold,
   fs: ditherFS,
   jjn: ditherJJN,
   sierra3: ditherSierra3,
