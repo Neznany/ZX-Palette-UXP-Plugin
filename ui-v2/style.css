@@ -42,7 +42,7 @@
   height: 18px;
 }
 
-.controls .scale-label {
+.controls .zoom-label {
   width: 16px;
   display: flex;
   height: 32px;
@@ -359,7 +359,7 @@
   height: 18px;
 }
 
-.controls .scale-label {
+.controls .zoom-label {
   width: 16px;
   display: flex;
   height: 32px;
