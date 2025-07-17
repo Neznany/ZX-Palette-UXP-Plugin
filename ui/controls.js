@@ -263,7 +263,7 @@ function setupControls({
     }
     prevScale = getSystemScale();
     if (pickerDialog) {
-      const current = Math.round(prevScale * 100) || 100;
+      const current = Math.round(prevScale * 1000)/10 || 100;
       const preset = ["100","125","150","175","200","225","250"];
       let target = preset.includes(String(current)) ? String(current) : "custom";
       pickerDialog.querySelectorAll("sp-menu-item").forEach((i) => i.removeAttribute("selected"));
