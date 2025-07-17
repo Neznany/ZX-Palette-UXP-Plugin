@@ -5,8 +5,8 @@
   <meta charset="UTF-8" />
   <title>ZX Palette</title>
 
- <script type="module" src="./libs/elements.js"></script>
-  
+  <script type="module" src="./libs/elements.js"></script>
+
 
   <style>
     html,
@@ -21,7 +21,7 @@
     body {
       display: flex;
       flex-direction: column;
-      background-color: rgba(0,0,0,0.25);
+      background-color: rgba(0, 0, 0, 0.25);
     }
 
     #invalidMsg {
@@ -121,30 +121,33 @@
     }
 
     /* groups */
-   .group {
+    .group {
       flex: 0 0 auto;
-    } 
-    
-    .group > :not(sp-label) {
+    }
+
+    .group> :not(sp-label) {
       margin: 0px 6px;
     }
-    
 
-    .sysScPick{
+
+    .sysScPick {
       width: 100px;
     }
 
-    @media (prefers-color-scheme: dark), (prefers-color-scheme: darkest) {
+    @media (prefers-color-scheme: dark),
+    (prefers-color-scheme: darkest) {
       label {
         color: #E0E0E0;
       }
     }
-    
-    @media (prefers-color-scheme: light), (prefers-color-scheme: lightest) {
+
+    @media (prefers-color-scheme: light),
+    (prefers-color-scheme: lightest) {
       .group {
-        background-color: rgba(0,0,0,0.0625);
+        background-color: rgba(0, 0, 0, 0.0625);
       }
-      .group > sp-label:not(.safe) {
+
+      .group>sp-label:not(.safe) {
         background-color: #E8E8E8;
       }
     }
@@ -152,7 +155,6 @@
     .icon {
       fill: currentColor;
     }
-
   </style>
 </head>
 
@@ -167,7 +169,7 @@
   </div>
 
   <div id="controls" class="group">
-    
+
     <sp-action-button class="control-button" id="scaleDown" icon-only aria-label="Зменшити масштаб">
       <img class="icon" src="img/zoom-minus.svg" alt="" />
     </sp-action-button>
@@ -217,27 +219,27 @@
     -->
 
     <sp-switch size="l" emphasized>Flash</sp-switch>
- 
+
     <label>
       Dithering
       <div class="selectFrame">
-      <select id="ditherAlgSel" style="width: 170px">
-        <option value="checker2x1" style="font-size: 12px">Сheckerboard 2x1 </option>
-        <option value="bayer2">Bayer 2×2</option>
-        <option value="bayer4">Bayer 4×4</option>
-        <option value="bayer">Bayer 8×8</option>
-        <!--<option value="dotdiff">Dot diffusion (true)</option>-->
-        <option value="fs">Floyd–Steinberg</option>
-        <option value="jjn">Jarvis–Judice–Ninke</option>
-        <option value="sierra3">Sierra-3</option>
-        <option value="stucki">Stucki</option>
-        <option value="burkes">Burkes</option>
-        <option value="atkinson">Atkinson</option>
-        <option value="bluenoise">Blue-noise</option>
-        <option value="linediag7x7" selected>Line-diag 7×7</option>
-        <option value="clustered">Clustered ordered</option>
-        <!--<option value="random">Random threshold</option>-->
-      </select>
+        <select id="ditherAlgSel" style="width: 170px">
+          <option value="checker2x1" style="font-size: 12px">Сheckerboard 2x1 </option>
+          <option value="bayer2">Bayer 2×2</option>
+          <option value="bayer4">Bayer 4×4</option>
+          <option value="bayer">Bayer 8×8</option>
+          <!--<option value="dotdiff">Dot diffusion (true)</option>-->
+          <option value="fs">Floyd–Steinberg</option>
+          <option value="jjn">Jarvis–Judice–Ninke</option>
+          <option value="sierra3">Sierra-3</option>
+          <option value="stucki">Stucki</option>
+          <option value="burkes">Burkes</option>
+          <option value="atkinson">Atkinson</option>
+          <option value="bluenoise">Blue-noise</option>
+          <option value="linediag7x7" selected>Line-diag 7×7</option>
+          <option value="clustered">Clustered ordered</option>
+          <!--<option value="random">Random threshold</option>-->
+        </select>
       </div>
     </label>
 
@@ -245,7 +247,8 @@
 
     <label>
       Amount
-      <sp-slider id="ditherStrength" min="0" max="100" step="1" value="50" variant="filled" style="width: 180px; margin: 0px 4px;">
+      <sp-slider id="ditherStrength" min="0" max="100" step="1" value="50" variant="filled"
+        style="width: 180px; margin: 0px 4px;">
       </sp-slider>
       <span id="ditherLabel" style="width: 32px">50%</span>
     </label>
@@ -253,11 +256,11 @@
     <label>
       Bright
       <div class="selectFrame">
-      <select id="brightModeSel">
-        <option value="on">On</option>
-        <option value="off">Off</option>
-        <option value="auto" selected>Auto</option>
-      </select>
+        <select id="brightModeSel">
+          <option value="on">On</option>
+          <option value="off">Off</option>
+          <option value="auto" selected>Auto</option>
+        </select>
       </div>
     </label>
     <label
@@ -267,21 +270,17 @@
     <sp-action-button id="saveScrBtn">Export</sp-action-button>
   </div>
 
-  
+
 
   <!-- Модальний діалог -->
-<dialog id="prefsDialog">
-  <sp-heading size="xs" style="margin:0">Select Your System Scale</sp-heading>
-  <sp-divider size="m" style="margin:10px 0"></sp-divider>
+  <dialog id="prefsDialog" style="width: 240px; height: 456px; padding: 24px;">
+    <sp-heading size="xs" style="margin:0">Select Your System Scale</sp-heading>
+    <sp-divider size="m" style="margin:10px 0"></sp-divider>
 
-  <!-- Меню з опціями -->
-  <sp-body >
+    <!-- Меню з опціями -->
+    <sp-body style="border: 1px solid rgba(255,255,255,0.1); width: 182px; height: 296px; padding: 8px 0px 0px 8px;">
 
-        <sp-menu
-          id="scalePicker"
-          label="sys scale"
-          style="width: 164px"
-          selects="single">
+      <sp-menu id="scalePicker" label="sys scale" style="width: 164px" selects="single">
         <sp-menu-item value="100">100%</sp-menu-item>
         <sp-menu-item value="125">125%</sp-menu-item>
         <sp-menu-item value="150">150%</sp-menu-item>
@@ -292,33 +291,28 @@
         <sp-menu-divider></sp-menu-divider>
         <sp-menu-item value="custom">
           <div style="display:flex; align-items:center;">
-          <span>Custom</span>
-        <sp-textfield disabled quiet
-          id="customField"
-          type="number"
-          placeholder="100–500"
-          min="100"
-          max="500"
-          style="width:70px; margin: 0px 8px; padding: 0;"
-        ></sp-textfield></div></sp-menu-item>
+            <span>Custom</span>
+            <sp-textfield disabled quiet id="customField" type="number" placeholder="100–500" min="100" max="500"
+              style="width:70px; margin: 0px 8px; padding: 0;"></sp-textfield>
+          </div>
+        </sp-menu-item>
       </sp-menu>
 
-  </sp-body>
+    </sp-body>
 
-  <!-- Кнопки підтвердження -->
-  <div class="row" style="justify-content:center; margin-top:20px">
-    <sp-button-group>
-      <sp-button variant="secondary"
-                 style="margin-right:10px">
-        Cancel
-      </sp-button>
-      <sp-button variant="primary">
-        OK
-      </sp-button>
-    </sp-button-group>
-  </div>
-</dialog>
-  
+    <!-- Кнопки підтвердження -->
+    
+      <sp-button-group style="margin: 10px;">
+        <sp-button variant="secondary" style="margin-right:10px">
+          Cancel
+        </sp-button>
+        <sp-button variant="primary">
+          OK
+        </sp-button>
+      </sp-button-group>
+    
+  </dialog>
+
   <script src="main.js"></script>
 
 </body>
