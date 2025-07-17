@@ -278,6 +278,7 @@ function setupControls({
         customField.disabled = true;
         customField.style.display = "none";
       }
+      pickerDialog.dispatchEvent(new Event('change'));
     }
     const result = await prefsDialog.uxpShowModal({
       title: "System Scale Adjustment",
@@ -348,6 +349,7 @@ function setupControls({
       setSystemScale(ssVal);
       updatePreview();
     }
+
   };
   pickerDialog?.addEventListener("change", onPickerChange);
   pickerDialog?.addEventListener("click", onPickerChange);
