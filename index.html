@@ -275,12 +275,12 @@
   <sp-divider size="m" style="margin:10px 0"></sp-divider>
 
   <!-- Меню з опціями -->
-  <sp-body style="display:flex; flex-direction:column; gap:8px">
+  <sp-body >
 
         <sp-menu
           id="scalePicker"
           label="sys scale"
-          style="width: 200px"
+          style="width: 164px"
           selects="single">
         <sp-menu-item value="100">100%</sp-menu-item>
         <sp-menu-item value="125">125%</sp-menu-item>
@@ -290,21 +290,23 @@
         <sp-menu-item value="225">225%</sp-menu-item>
         <sp-menu-item value="250">250%</sp-menu-item>
         <sp-menu-divider></sp-menu-divider>
-        <sp-menu-item value="custom" style="text-align: center; align-items: center;">Custom
+        <sp-menu-item value="custom">
+          <div style="display:flex; align-items:center;">
+          <span>Custom</span>
         <sp-textfield disabled quiet
           id="customField"
           type="number"
           placeholder="100–500"
           min="100"
           max="500"
-          style="width:100px;"
-        ></sp-textfield></sp-menu-item>
+          style="width:70px; margin: 0px 8px; padding: 0;"
+        ></sp-textfield></div></sp-menu-item>
       </sp-menu>
 
   </sp-body>
 
   <!-- Кнопки підтвердження -->
-  <div class="row" style="justify-content:flex-end; margin-top:20px">
+  <div class="row" style="justify-content:center; margin-top:20px">
     <sp-button-group>
       <sp-button variant="secondary"
                  style="margin-right:10px">

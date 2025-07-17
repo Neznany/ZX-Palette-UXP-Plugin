@@ -271,9 +271,9 @@ function setupControls({
       }
     }
     const result = await prefsDialog.uxpShowModal({
-      title: "System Scale Preferences",
+      title: "System Scale Adjustment",
       resize: "none",
-      size: { width: 280, height: 300 }
+      size: { width: 240, height: 300 }
     });
     if (result === 'ok') {
       let value = pickerDialog.value;
@@ -290,6 +290,7 @@ function setupControls({
       if (selSys) {
         selSys.value = ssVal.toString();
         selSys.dispatchEvent(new Event('change'));
+        
       } else {
         saveSettings({
           ...loadSettings(),
@@ -304,9 +305,15 @@ function setupControls({
     }
   });
 
+  // Enable/disable customField based on picker selection
   pickerDialog?.addEventListener("change", () => {
     if (pickerDialog.value === 'custom') {
+      customField.disabled = false;
+      customField.style.display = '';
       customField.focus();
+    } else {
+      customField.disabled = true;
+      customField.style.display = 'none';
     }
   });
 
