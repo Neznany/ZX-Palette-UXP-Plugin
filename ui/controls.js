@@ -279,6 +279,7 @@ function setupControls({
         customField.disabled = true;
         customField.style.display = "none";
       }
+      pickerDialog.dispatchEvent(new Event('change'));
     }
     prefsDialog.show();
   });
