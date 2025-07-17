@@ -16,12 +16,18 @@
   },
   "entrypoints": [
     {
+        "type": "command",
+        "id": "reloadPlugin",
+        "label": "Reload Plugin"
+    },
+    {
       "type": "panel",
       "id": "zxpalette-panel",
       "label": {
       "default": "ZX Palette"
       },
       "preferredFloatingSize": { "width": 640, "height": 600 },
+      "preferredDockedSize": {"width": 230, "height": 300},
       "minimumSize":           { "width": 300, "height": 300 },
       "maximumSize":           { "width": 1600, "height": 1200 }
     },
