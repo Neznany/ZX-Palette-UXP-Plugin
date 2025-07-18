@@ -65,6 +65,12 @@ let lastDocBits = "";
 let lastDocWidth = 0;
 let lastDocHeight = 0;
 
+function clearPreview() {
+  img.src = "";
+  thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
+  pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
+}
+
 // Track slider interaction state
 let sliderDragging = false;
 let sliderReleasedAt = 0;
@@ -250,6 +256,37 @@ async function fetchThumb() {
 }
 
 async function updatePreview(cacheOnly = false) {
+  const d = app.activeDocument;
+  if (!d) {
+    clearPreview();
+    return;
+  }
+
+  const docW = Math.round(+d.width),
+        docH = Math.round(+d.height);
+  const modeStr = String(d.mode || "").toLowerCase();
+  const bitStr = String(d.bitsPerChannel);
+  const bits = /16/.test(bitStr) ? 16 : 8;
+
+  invalid = docW % 8 ||
+    docH % 8 ||
+    docW > 512 ||
+    docH > 384 ||
+    !/(8|16)/.test(bitStr) || // supports 8-bit and 16-bit
+    !/rgb/.test(modeStr);
+
+  if (invalid) {
+    if (msg) msg.classList.remove("hidden");
+    clearPreview();
+    lastDocMode = modeStr;
+    lastDocBits = bits;
+    lastDocWidth = docW;
+    lastDocHeight = docH;
+    return;
+  } else {
+    if (msg) msg.classList.add("hidden");
+  }
+
   if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
     setTimeout(() => updatePreview(cacheOnly), 250);
     return;
@@ -275,41 +312,9 @@ async function updatePreview(cacheOnly = false) {
         lastH = thumb.h;
       }
     } else {
-      const d = app.activeDocument;
-      if (!d) {
-        img.src = "";
-        return;
-      }
-      const docW = Math.round(+d.width),
-            docH = Math.round(+d.height);
-      const modeStr = String(d.mode || "").toLowerCase();
-      const bitStr = String(d.bitsPerChannel);
-      const bits = /16/.test(bitStr) ? 16 : 8;
-
-      invalid = docW % 8 ||
-        docH % 8 ||
-        docW > 512 ||
-        docH > 384 ||
-        !/(8|16)/.test(bitStr) || // supports 8-bit and 16-bit
-        !/rgb/.test(modeStr);
-
       const formatChanged =
         modeStr !== lastDocMode || bits !== lastDocBits ||
         docW !== lastDocWidth || docH !== lastDocHeight;
-
-      if (invalid) {
-        if (msg) msg.classList.remove("hidden");
-        img.src = "";
-        thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
-        pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
-        lastDocMode = modeStr;
-        lastDocBits = bits;
-        lastDocWidth = docW;
-        lastDocHeight = docH;
-        return;
-      } else {
-        if (msg) msg.classList.add("hidden");
-      }
 
       const docId = d.id;
       const histId = d.activeHistoryState ? d.activeHistoryState.id : null;
@@ -422,9 +427,7 @@ async function saveSCR() {
 }
 
 // Listen for Photoshop script actions
-action.addNotificationListener(["make", "set", "delete"], () =>
-  window.requestAnimationFrame(updatePreview)
-);
+action.addNotificationListener(["make", "set", "delete", "open", "close", "select"], updatePreview);
 
 // Ensure DOM is ready before binding UI
 document.addEventListener("DOMContentLoaded", () => {
