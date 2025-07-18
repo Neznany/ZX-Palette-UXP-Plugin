@@ -142,6 +142,42 @@ function indexedToRgba({ pixels, attrs, width: w, height: h }, swapFlash = false
   return rgba;
 }
 
+function applyFlashAttrs(indexed, flashRgba, w, h) {
+  const cols = w >> 3;
+  const rows = h >> 3;
+  const freq = new Int16Array(8);
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      const attr = indexed.attrs[by * cols + bx];
+      let flagged = false;
+      freq.fill(0);
+      for (let dy = 0; dy < 8; dy++) {
+        const y = by * 8 + dy;
+        for (let dx = 0; dx < 8; dx++) {
+          const x = bx * 8 + dx;
+          const p = (y * w + x) * 4;
+          const a = flashRgba[p + 3];
+          if (a > 127) {
+            flagged = true;
+            if (attr.ink === attr.paper) {
+              const idx = rgbToIndex(flashRgba[p], flashRgba[p + 1], flashRgba[p + 2]);
+              freq[idx]++;
+            }
+          }
+        }
+      }
+      if (flagged) {
+        attr.flash = 1;
+        if (attr.ink === attr.paper) {
+          let best = 0, bestC = -1;
+          for (let i = 0; i < 8; i++) if (freq[i] > bestC) { bestC = freq[i]; best = i; }
+          attr.ink = best;
+        }
+      }
+    }
+  }
+}
+
 function _isImageDark(indexed) {
   const { pixels } = indexed;
   let sum = 0;
@@ -191,5 +227,6 @@ module.exports = {
   ZX_BASE,
   ZX_FULL,
   rgbToIndex,
+  applyFlashAttrs,
   optimizeAttributes,
 };
