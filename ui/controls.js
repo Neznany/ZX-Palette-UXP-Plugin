@@ -279,6 +279,7 @@ function setupControls({
           height: H,
           components: 4,
           colorSpace: "RGB",
+          componentSize: bits,
         });
         const lyr = await d.createLayer({ name: "Filtered ZX " + selAlg.value });
         await imaging.putPixels({
