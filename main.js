@@ -477,8 +477,31 @@ document.addEventListener("DOMContentLoaded", () => {
     setSliderDragging,
     notifySliderChange,
     setBrightMode,
-    setFlashEnabled,
-    saveSCR, // ← функція експорту
+  setFlashEnabled,
+  saveSCR, // ← функція експорту
+  });
+
+  // Tooltip handling: show after 1s, hide after 5s
+  document.querySelectorAll('.tooltip').forEach(btn => {
+    const tip = btn.querySelector('sp-tooltip');
+    if (!tip) return;
+    tip.removeAttribute('open');
+    let showT, hideT;
+    const cancel = () => {
+      clearTimeout(showT);
+      clearTimeout(hideT);
+      tip.removeAttribute('open');
+    };
+    btn.addEventListener('mouseenter', () => {
+      clearTimeout(showT);
+      clearTimeout(hideT);
+      showT = setTimeout(() => {
+        tip.setAttribute('open', '');
+        hideT = setTimeout(cancel, 5000);
+      }, 1000);
+    });
+    btn.addEventListener('mouseleave', cancel);
+    btn.addEventListener('click', cancel);
   });
 
   // Initial update
