@@ -97,6 +97,7 @@ async function addFlashCorners(layer, doc, imaging, replace = true) {
     height: H,
     components: 4,
     colorSpace: "RGB",
+    componentSize: bits,
   });
   await imaging.putPixels({ layerID: layer.id, imageData: imgData, replace });
   imgData.dispose();
