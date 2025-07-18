@@ -279,6 +279,28 @@
     </label>
 
     <label
+      title="Toggle brightness bit">
+    <sp-action-button class="control-button" id="brightModeSel" icon-only style="margin: 0px 6px;">
+        <svg width="18" height="18" id="brightOnIcon" slot="" fill="currentColor">
+          <path d="M9.75 3.75V0.75H8.25V3.75H9.75Z"/><path d="M5.81802 4.75736L3.6967 2.63604L2.63604 3.6967L4.75736 5.81802L5.81802 4.75736Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.75 9C12.75 6.92893 11.0711 5.25 9 5.25C6.92893 5.25 5.25 6.92893 5.25 9C5.25 11.0711 6.92893 12.75 9 12.75C11.0711 12.75 12.75 11.0711 12.75 9ZM9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75Z"/>
+          <path d="M5.81802 13.2426L4.75736 12.182L2.63604 14.3033L3.6967 15.364L5.81802 13.2426Z"/><path d="M9.75 17.25V14.25H8.25V17.25H9.75Z"/><path d="M15.364 14.3033L14.3033 15.364L12.182 13.2426L13.2426 12.182L15.364 14.3033Z"/><path d="M3.75 9.75V8.25H0.75V9.75H3.75Z"/>
+          <path d="M17.25 8.25V9.75H14.25V8.25H17.25Z"/><path d="M14.3033 2.63604L15.364 3.6967L13.2426 5.81802L12.182 4.75736L14.3033 2.63604Z"/>
+        </svg>
+        <svg width="18" height="18" id="brightOffIcon" slot="icon" fill="currentColor" class="hidden">
+          <path d="M9.75 4.5V3H8.25V4.5H9.75Z"/><path d="M6.34835 5.28769L5.28769 4.22703L4.22703 5.28769L5.28769 6.34835L6.34835 5.28769Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 9C12 7.34315 10.6569 6 9 6C7.34315 6 6 7.34315 6 9C6 10.6569 7.34315 12 9 12C10.6569 12 12 10.6569 12 9ZM7.5 9C7.5 8.17157 8.17157 7.5 9 7.5C9.82843 7.5 10.5 8.17157 10.5 9C10.5 9.82843 9.82843 10.5 9 10.5C8.17157 10.5 7.5 9.82843 7.5 9Z"/>
+          <path d="M9.75 13.5V15H8.25V13.5H9.75Z"/><path d="M6.34835 12.7123L5.28769 11.6517L4.22703 12.7123L5.28769 13.773L6.34835 12.7123Z"/><path d="M12.7123 11.6517L13.773 12.7123L12.7123 13.773L11.6517 12.7123L12.7123 11.6517Z"/>
+          <path d="M4.5 9.75V8.25H3V9.75H4.5Z"/><path d="M15 9.75H13.5V8.25H15V9.75Z"/><path d="M12.7123 4.22703L13.773 5.28769L12.7123 6.34835L11.6517 5.28769L12.7123 4.22703Z"/>
+        </svg>
+        <svg width="18" height="18" id="brightAutoIcon" slot="icon" fill="currentColor" class="hidden">
+          <path d="M9.75 3.75V0.75H8.25V3.75H9.75Z"/><path d="M5.81802 4.75736L3.6967 2.63604L2.63604 3.6967L4.75736 5.81802L5.81802 4.75736Z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.18962 12.7453L9.95876 11.0361C9.6679 11.1733 9.34291 11.25 9 11.25C7.75736 11.25 6.75 10.2426 6.75 9C6.75 7.75736 7.75736 6.75 9 6.75C10.0229 6.75 10.8864 7.43261 11.1598 8.36716L11.9289 6.65798C11.2417 5.79968 10.185 5.25 9 5.25C6.92893 5.25 5.25 6.92893 5.25 9C5.25 11.0711 6.92893 12.75 9 12.75C9.06359 12.75 9.12681 12.7484 9.18962 12.7453Z"/>
+          <path d="M5.81802 13.2426L4.75736 12.182L2.63604 14.3033L3.6967 15.364L5.81802 13.2426Z"/><path d="M3.75 9.75V8.25H0.75V9.75H3.75Z"/><path d="M14.3033 2.63604L15.364 3.6967L13.2426 5.81802L12.182 4.75736L14.3033 2.63604Z"/>
+          <path d="M11.1187 17H9L12.2283 8H14.7763L18 17H15.8813L13.5388 10.0566H13.4658L11.1187 17ZM10.9863 13.4624H15.9909V14.9478H10.9863V13.4624Z"/>
+        </svg>
+    </sp-action-button>
+    </label>
+
+
+    <label
       title="1. To activate the flash bit, put pixels in a layer named FLASH.&#10;2. If a block contains only one color, the second color will be taken from this layer.&#10;3. Hide the FLASH layer so it does not affect the visible result.">
       <sp-switch emphasized id="flashChk" label="Flash">Flash</sp-switch>
     </label>
