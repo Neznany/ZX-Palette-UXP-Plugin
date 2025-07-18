@@ -94,9 +94,12 @@ function setupControls({
   }
   updateBrightUI();
   if (typeof settings.flashEnabled === 'boolean' && flashChk) {
-    flashChk.checked = settings.flashEnabled;
-    setFlashEnabled(flashChk.checked);
+    flashChk.dataset.state = settings.flashEnabled ? 'on' : 'off';
+    setFlashEnabled(settings.flashEnabled);
+  } else if (flashChk && !flashChk.dataset.state) {
+    flashChk.dataset.state = 'off';
   }
+  updateFlashUI();
 
   // Синхронізуємо selectedAlg у main.js з UI після відновлення
   if (selAlg) setAlgorithm(selAlg.value);
@@ -112,6 +115,15 @@ function setupControls({
     if (autoIcon) autoIcon.classList.toggle('hidden', mode !== 'auto');
   }
 
+  function updateFlashUI() {
+    if (!flashChk) return;
+    const state = flashChk.dataset.state === 'on';
+    const onIcon = document.getElementById('flashOn');
+    const offIcon = document.getElementById('flashOff');
+    if (onIcon) onIcon.classList.toggle('hidden', !state);
+    if (offIcon) offIcon.classList.toggle('hidden', state);
+  }
+
 
   // Helper to update zoom label and preview
   function updateZoomLabelAndPreview() {
@@ -123,7 +135,7 @@ function setupControls({
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.dataset.mode,
-      flashEnabled: flashChk?.checked
+      flashEnabled: flashChk?.dataset.state === 'on'
     });
     updatePreview();
   }
@@ -137,7 +149,7 @@ function setupControls({
       zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       brightMode: brightSel?.dataset.mode,
-      flashEnabled: flashChk?.checked
+      flashEnabled: flashChk?.dataset.state === 'on'
     });
     updatePreview();
   });
@@ -157,16 +169,19 @@ function setupControls({
       zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
-      flashEnabled: flashChk?.checked
+      flashEnabled: flashChk?.dataset.state === 'on'
     });
     updatePreview();
   });
 
-  flashChk?.addEventListener("change", () => {
-    setFlashEnabled(flashChk.checked);
+  flashChk?.addEventListener("click", () => {
+    const next = flashChk.dataset.state === 'on' ? 'off' : 'on';
+    flashChk.dataset.state = next;
+    setFlashEnabled(next === 'on');
+    updateFlashUI();
     saveSettings({
       ...loadSettings(),
-      flashEnabled: flashChk.checked,
+      flashEnabled: next === 'on',
       zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
@@ -222,7 +237,7 @@ function setupControls({
       zoomPreview: getZoom(),
       ditherAlg: selAlg?.value,
       brightMode: brightSel?.dataset.mode,
-      flashEnabled: flashChk?.checked
+      flashEnabled: flashChk?.dataset.state === 'on'
     });
     updatePreview();
   });
@@ -238,7 +253,7 @@ function setupControls({
         // Отримуємо RGBA через утиліту
         const { rgba } = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H }, false);
         let flashRgba = null;
-        if (flashChk?.checked) {
+        if (flashChk?.dataset.state === 'on') {
           let flashLayer = await ensureFlashLayer(d, imaging);
           try {
             const fr = await getRgbaPixels(imaging, { left: 0, top: 0, width: W, height: H, layerID: flashLayer.id }, false);
@@ -336,7 +351,7 @@ function setupControls({
           zoomPreview: getZoom(),
           ditherAlg: selAlg?.value,
           brightMode: brightSel?.dataset.mode,
-          flashEnabled: flashChk?.checked
+          flashEnabled: flashChk?.dataset.state === 'on'
         });
         updatePreview();
       }
