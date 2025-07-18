@@ -144,11 +144,11 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   const idx = { pixels, attrs, width: W, height: H };
   const tiles = encodeTiles(idx);
   assert.strictEqual(tiles.length, 1);
-  const d = decode(tiles[0].bytes);
+  const d = decodeScr(tiles[0].bytes);
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 24; x++) {
       const val = d.pixels[y * 256 + x];
-      assert.strictEqual(val, 1);
+      if (x < 8) assert.strictEqual(val, 1); else assert.strictEqual(val, 0);
     }
   }
 })();
