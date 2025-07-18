@@ -6,7 +6,7 @@ const NEIGHBOR_OFFSETS = [
   [-1, 0], [1, 0], [0, -1], [0, 1]
 ];
 
-// Determine majority fill for uniform blocks using BFS queue
+// Determine majority fill for uniform blocks using iterative passes
 function computeFillBytes(indexed, preferDarkInk = true) {
   const { pixels, attrs, width: W, height: H } = indexed;
   const cols = Math.ceil(W / 8);
@@ -24,8 +24,24 @@ function computeFillBytes(indexed, preferDarkInk = true) {
       const attr = attrs[idx];
       if (!attr) continue;
       if (attr.ink !== attr.paper) {
-        if ((preferDarkInk && attr.ink > attr.paper) || (!preferDarkInk && attr.ink < attr.paper)) {
-          const t = attr.ink; attr.ink = attr.paper; attr.paper = t;
+        const fullyInside = bx * 8 + 8 <= W && by * 8 + 8 <= H;
+        if (fullyInside && ((preferDarkInk && attr.ink > attr.paper) || (!preferDarkInk && attr.ink < attr.paper))) {
+          const oldInk = attr.ink;
+          const oldPaper = attr.paper;
+          attr.ink = oldPaper;
+          attr.paper = oldInk;
+          // swap pixel values inside the block to keep appearance
+          for (let dy = 0; dy < 8; dy++) {
+            const y = by * 8 + dy;
+            if (y >= H) continue;
+            for (let dx = 0; dx < 8; dx++) {
+              const x = bx * 8 + dx;
+              if (x >= W) continue;
+              const p = y * W + x;
+              if (pixels[p] === oldInk) pixels[p] = oldPaper;
+              else if (pixels[p] === oldPaper) pixels[p] = oldInk;
+            }
+          }
         }
         normal.add(idx);
       } else {
@@ -37,10 +53,6 @@ function computeFillBytes(indexed, preferDarkInk = true) {
   if (!uniform.size) return fill;
 
   const isDark = _isImageDark(indexed);
-
-  const queued = new Set();
-  const processed = new Set();
-  const queues = [[], [], [], [], []];
 
   function inBounds(bx, by) {
     return bx >= 0 && bx < cols && by >= 0 && by < rows;
@@ -56,14 +68,6 @@ function computeFillBytes(indexed, preferDarkInk = true) {
     }
     return c;
   }
-
-  function enqueue(idx) {
-    if (queued.has(idx) || processed.has(idx) || !uniform.has(idx)) return;
-    const c = countNormal(idx);
-    if (c > 0) { queues[c].push(idx); queued.add(idx); }
-  }
-
-  for (const idx of uniform) enqueue(idx);
 
   function edgeCounts(idx) {
     const bx = idx % cols; const by = Math.floor(idx / cols);
@@ -88,31 +92,28 @@ function computeFillBytes(indexed, preferDarkInk = true) {
     return { ones, zeros };
   }
 
-  while (queues.some(q => q.length)) {
-    let lvl = 4;
-    while (lvl > 0 && queues[lvl].length === 0) lvl--;
-    if (lvl === 0) break;
-    const idx = queues[lvl].shift();
-    queued.delete(idx);
-    if (processed.has(idx)) continue;
-    const { ones, zeros } = edgeCounts(idx);
-    let byte;
-    if (ones === zeros) byte = isDark ? 0x00 : 0xFF;
-    else byte = ones > zeros ? 0xFF : 0x00;
-    fill[idx] = byte;
-    normal.add(idx);
-    processed.add(idx);
-    for (const [dx, dy] of NEIGHBOR_OFFSETS) {
-      const nbx = (idx % cols) + dx; const nby = Math.floor(idx / cols) + dy;
-      if (!inBounds(nbx, nby)) continue;
-      enqueue(nby * cols + nbx);
+  while (uniform.size) {
+    let progressed = false;
+    for (let want = 4; want >= 1; want--) {
+      const toProcess = [];
+      for (const idx of uniform) {
+        if (countNormal(idx) === want) toProcess.push(idx);
+      }
+      if (!toProcess.length) continue;
+      for (const idx of toProcess) {
+        const { ones, zeros } = edgeCounts(idx);
+        const byte = ones === zeros ? (isDark ? 0x00 : 0xFF) : (ones > zeros ? 0xFF : 0x00);
+        fill[idx] = byte;
+        uniform.delete(idx);
+        normal.add(idx);
+        progressed = true;
+      }
     }
+    if (!progressed) break;
   }
 
   // any remaining blocks default by overall brightness
-  for (const idx of uniform) {
-    if (!processed.has(idx)) fill[idx] = isDark ? 0x00 : 0xFF;
-  }
+  for (const idx of uniform) fill[idx] = isDark ? 0x00 : 0xFF;
 
   return fill;
 }
@@ -174,7 +175,7 @@ function encodeTile(indexed, fillMap, tx = 0, ty = 0) {
 const { optimizeAttributes, _isImageDark } = require('./indexed');
 
 // Split large images into 256x192 tiles encoded as individual .scr buffers
-function encodeTiles(indexed, preferDarkInk = false) {
+function encodeTiles(indexed, preferDarkInk = true) {
   // tweak attributes globally before tiling (only handle fully uniform case)
   if (indexed.attrs.every(a => a.ink === a.paper)) {
     const paper = indexed.attrs[0].paper & 7;
@@ -228,4 +229,3 @@ function decodeScr(scr) {
 }
 
 module.exports = { encodeTile, encodeTiles, decodeScr, computeFillBytes };
-

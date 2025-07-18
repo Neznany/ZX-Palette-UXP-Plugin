@@ -30,9 +30,8 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   for (let by = 0; by < 24; by++) {
     for (let bx = 0; bx < 32; bx++) {
       const a = d.attrs[by * 32 + bx];
-      const val = ((a.flash ? 1 : 0) << 7) | ((a.bright ? 1 : 0) << 6) | ((a.paper & 7) << 3) | (a.ink & 7);
-      if (by < 8 && bx < 8) assert.strictEqual(val, 1);
-      else assert.strictEqual(val, 7);
+      if (by < 8 && bx < 8) assert.strictEqual(a, 8);
+      else assert.strictEqual(a, 7);
     }
   }
 })();
@@ -42,12 +41,9 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   const idx = makeIndexed(256, 192, 2);
   const tiles = encodeTiles(idx);
   assert.strictEqual(tiles.length, 1);
-  const d = decodeScr(tiles[0].bytes);
-  for (const v of d.pixels) assert.strictEqual(v, 2);
-  for (const a of d.attrs) {
-    const val = ((a.flash ? 1 : 0) << 7) | ((a.bright ? 1 : 0) << 6) | ((a.paper & 7) << 3) | (a.ink & 7);
-    assert.strictEqual(val, 2);
-  }
+  const d = decode(tiles[0].bytes);
+  for (const v of d.pixels) assert.strictEqual(v, 1);
+  for (const a of d.attrs) assert.strictEqual(a, 16);
 })();
 
 // Case 3: 512x64 -> two tiles
@@ -100,8 +96,7 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   }
   for (let i = 0; i < d.attrs.length; i++) {
     const a = d.attrs[i];
-    const val = ((a.flash ? 1 : 0) << 7) | ((a.bright ? 1 : 0) << 6) | ((a.paper & 7) << 3) | (a.ink & 7);
-    if (i === 0) assert.strictEqual(val, 28); else assert.strictEqual(val, 7);
+    if (i === 0) assert.strictEqual(a, 35); else assert.strictEqual(a, 7);
   }
 })();
 
@@ -130,10 +125,8 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   }
   const a0 = d.attrs[0];
   const a1 = d.attrs[1];
-  const v0 = ((a0.flash ? 1 : 0) << 7) | ((a0.bright ? 1 : 0) << 6) | ((a0.paper & 7) << 3) | (a0.ink & 7);
-  const v1 = ((a1.flash ? 1 : 0) << 7) | ((a1.bright ? 1 : 0) << 6) | ((a1.paper & 7) << 3) | (a1.ink & 7);
-  assert.strictEqual(v0, 0);
-  assert.strictEqual(v1, 1);
+  assert.strictEqual(a0, 0);
+  assert.strictEqual(a1, 8);
 })();
 
 // Case 7: propagation through multiple uniform blocks
