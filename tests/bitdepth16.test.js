@@ -3,7 +3,7 @@ const { convertTo8BitRgba, convertTo16BitRgba } = require('../utils/utils');
 
 // RGBA input in 16 bits per channel
 const dataRgba16 = new Uint16Array([
-  32768, 16384, 0, 65535, // pixel 0
+  32768, 16384, 0, 32768, // pixel 0
   0, 16384, 32768, 0      // pixel 1
 ]);
 const out1 = convertTo8BitRgba(dataRgba16, 2);

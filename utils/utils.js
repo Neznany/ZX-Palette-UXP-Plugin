@@ -42,7 +42,7 @@ function convertTo8BitRgba(data, pxCount) {
     // Handle 16-bit values by scaling to 8-bit
     out[po + 1] = is16 ? Math.round(data[pi + 1] * 255 / 32768) : data[pi + 1];
     out[po + 2] = is16 ? Math.round(data[pi + 2] * 255 / 32768) : data[pi + 2];
-    out[po + 3] = comps === 4 ? (is16 ? data[pi + 3] >> 8 : data[pi + 3]) : 255;
+    out[po + 3] = comps === 4 ? (is16 ? Math.round(data[pi + 3] * 255 / 32768) : data[pi + 3]) : 255;
   }
   return out;
 }
@@ -61,7 +61,8 @@ function convertTo16BitRgba(data8) {
     out[pi]     = Math.round(data8[pi]     * 32768 / 255);
     out[pi + 1] = Math.round(data8[pi + 1] * 32768 / 255);
     out[pi + 2] = Math.round(data8[pi + 2] * 32768 / 255);
-    out[pi + 3] = data8[pi + 3] << 8;
+    out[pi + 3] = Math.round(data8[pi + 3] * 32768 / 255);
+    if (out[pi + 3] > 32767) out[pi + 3] = 32767;
   }
   return out;
 }
