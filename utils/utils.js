@@ -20,20 +20,30 @@ async function getRgbaPixels(imaging, options, applyAlpha = true) {
   const data = await imageData.getData();
   imageData.dispose();
   const pxCount = outW * outH;
-  let rgba;
-  if (data.length === pxCount * 3) { // якщо RGB
-    // Перетворюємо RGB в RGBA
-    rgba = new Uint8Array(pxCount * 4);
-    for (let i = 0; i < pxCount; i++) {
-      rgba[i * 4] = data[i * 3];
-      rgba[i * 4 + 1] = data[i * 3 + 1];
-      rgba[i * 4 + 2] = data[i * 3 + 2];
-      rgba[i * 4 + 3] = 255;
-    }
-  } else {
-    rgba = data;
-  }
+  const rgba = convertTo8BitRgba(data, pxCount);
   return { rgba, width: outW, height: outH };
+}
+
+/**
+ * Convert pixel data from imaging API to Uint8 RGBA buffer.
+ * Handles 8-bit and 16-bit per channel inputs.
+ * @param {Uint8Array|Uint16Array} data
+ * @param {number} pxCount
+ * @returns {Uint8Array}
+ */
+function convertTo8BitRgba(data, pxCount) {
+  const comps = data.length / pxCount;
+  const is16 = data.BYTES_PER_ELEMENT === 2;
+  const out = new Uint8Array(pxCount * 4);
+  for (let i = 0; i < pxCount; i++) {
+    const pi = i * comps;
+    const po = i * 4;
+    out[po]     = is16 ? data[pi]     >> 8 : data[pi];
+    out[po + 1] = is16 ? data[pi + 1] >> 8 : data[pi + 1];
+    out[po + 2] = is16 ? data[pi + 2] >> 8 : data[pi + 2];
+    out[po + 3] = comps === 4 ? (is16 ? data[pi + 3] >> 8 : data[pi + 3]) : 255;
+  }
+  return out;
 }
 
 function findLayerByName(layers, name) {
@@ -106,4 +116,4 @@ async function ensureFlashLayer(doc, imaging) {
   return layer;
 }
 
-module.exports = { getRgbaPixels, findLayerByName, ensureFlashLayer };
+module.exports = { getRgbaPixels, findLayerByName, ensureFlashLayer, convertTo8BitRgba };
