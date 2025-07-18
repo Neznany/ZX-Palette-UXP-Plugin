@@ -50,7 +50,7 @@ function decode(scr) {
   for (let by = 0; by < 24; by++) {
     for (let bx = 0; bx < 32; bx++) {
       const a = d.attrs[by * 32 + bx];
-      if (by < 8 && bx < 8) assert.strictEqual(a, 1);
+      if (by < 8 && bx < 8) assert.strictEqual(a, 8);
       else assert.strictEqual(a, 7);
     }
   }
@@ -63,7 +63,7 @@ function decode(scr) {
   assert.strictEqual(tiles.length, 1);
   const d = decode(tiles[0].bytes);
   for (const v of d.pixels) assert.strictEqual(v, 1);
-  for (const a of d.attrs) assert.strictEqual(a, 2);
+  for (const a of d.attrs) assert.strictEqual(a, 16);
 })();
 
 // Case 3: 512x64 -> two tiles
@@ -111,7 +111,7 @@ function decode(scr) {
   for (const val of d.pixels) assert.strictEqual(val, 0);
   for (let i = 0; i < d.attrs.length; i++) {
     const a = d.attrs[i];
-    if (i === 0) assert.strictEqual(a, 28); else assert.strictEqual(a, 7);
+    if (i === 0) assert.strictEqual(a, 35); else assert.strictEqual(a, 7);
   }
 })();
 
@@ -141,7 +141,31 @@ function decode(scr) {
   const a0 = d.attrs[0];
   const a1 = d.attrs[1];
   assert.strictEqual(a0, 0);
-  assert.strictEqual(a1, 1);
+  assert.strictEqual(a1, 8);
+})();
+
+// Case 7: propagation through multiple uniform blocks
+(() => {
+  const W = 24; const H = 8;
+  const pixels = new Uint8Array(W * H);
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) pixels[y * W + x] = 1;
+  }
+  const attrs = [
+    { ink: 1, paper: 0, bright: 0, flash: 0 },
+    { ink: 0, paper: 0, bright: 0, flash: 0 },
+    { ink: 0, paper: 0, bright: 0, flash: 0 },
+  ];
+  const idx = { pixels, attrs, width: W, height: H };
+  const tiles = encodeTiles(idx);
+  assert.strictEqual(tiles.length, 1);
+  const d = decode(tiles[0].bytes);
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 24; x++) {
+      const val = d.pixels[y * 256 + x];
+      assert.strictEqual(val, 1);
+    }
+  }
 })();
 
 console.log('SCR tiling tests passed');
