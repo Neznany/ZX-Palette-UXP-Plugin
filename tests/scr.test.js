@@ -144,4 +144,28 @@ function decode(scr) {
   assert.strictEqual(a1, 1);
 })();
 
+// Case 7: propagation through multiple uniform blocks
+(() => {
+  const W = 24; const H = 8;
+  const pixels = new Uint8Array(W * H);
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) pixels[y * W + x] = 1;
+  }
+  const attrs = [
+    { ink: 1, paper: 0, bright: 0, flash: 0 },
+    { ink: 0, paper: 0, bright: 0, flash: 0 },
+    { ink: 0, paper: 0, bright: 0, flash: 0 },
+  ];
+  const idx = { pixels, attrs, width: W, height: H };
+  const tiles = encodeTiles(idx);
+  assert.strictEqual(tiles.length, 1);
+  const d = decode(tiles[0].bytes);
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 24; x++) {
+      const val = d.pixels[y * 256 + x];
+      assert.strictEqual(val, 1);
+    }
+  }
+})();
+
 console.log('SCR tiling tests passed');

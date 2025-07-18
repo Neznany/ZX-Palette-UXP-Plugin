@@ -228,5 +228,6 @@ module.exports = {
   ZX_FULL,
   rgbToIndex,
   applyFlashAttrs,
+  _isImageDark,
   optimizeAttributes,
 };
