@@ -4,11 +4,11 @@ const { setupControls, loadSettings } = require("./ui/controls");
 const { reduceToDominantPair } = require("./filters/reduce");
 const { ditherSeparateChannels } = require("./filters/dither");
 const { rgbaToIndexed, indexedToRgba, computeBrightAttrs, rgbToIndex, applyFlashAttrs } = require("./utils/indexed");
-const { encodeTiles } = require("./utils/scr");
+const { encodeTiles, decodeScr } = require("./utils/scr");
 const { storage } = require("uxp");
 const fs = storage.localFileSystem;
 const formats = storage.formats;
-const { getRgbaPixels, ensureFlashLayer } = require("./utils/utils");
+const { getRgbaPixels, ensureFlashLayer, convertTo16BitRgba } = require("./utils/utils");
 
 // DOM elements
 const img = document.getElementById("previewImg");
@@ -425,6 +425,43 @@ async function saveSCR() {
   }
 }
 
+async function importSCR() {
+  const file = await fs.getFileForOpening({ types: ['scr'] });
+  if (!file) return;
+  const name = file.name || 'import.scr';
+  const buf = await file.read({ format: formats.binary });
+  const bytes = new Uint8Array(buf);
+  if (bytes.length !== 6912) {
+    console.error('Invalid .scr file');
+    return;
+  }
+  const indexed = decodeScr(bytes);
+  const rgba8 = indexedToRgba(indexed, false);
+  await core.executeAsModal(async () => {
+    let doc = app.activeDocument;
+    if (!doc) {
+      doc = await app.createDocument({ width: indexed.width, height: indexed.height, mode: 'RGBColorMode', fill: 'transparent' });
+    } else if (Math.round(+doc.width) !== indexed.width || Math.round(+doc.height) !== indexed.height) {
+      alert('Document size must be 256x192 to import .scr');
+      return;
+    }
+    const bitStr = String(doc.bitsPerChannel);
+    const bits = /16/.test(bitStr) ? 16 : 8;
+    const bufOut = bits === 16 ? convertTo16BitRgba(rgba8) : rgba8;
+    const imgData = await imaging.createImageDataFromBuffer(bufOut, {
+      width: indexed.width,
+      height: indexed.height,
+      components: 4,
+      colorSpace: 'RGB',
+      componentSize: bits,
+    });
+    const layer = await doc.createLayer({ name });
+    await imaging.putPixels({ layerID: layer.id, imageData: imgData, replace: true });
+    imgData.dispose();
+  }, { commandName: 'Import SCR' });
+  updatePreview();
+}
+
 // Listen for Photoshop script actions
 action.addNotificationListener(["make", "set", "delete", "open", "close"], () =>
   window.requestAnimationFrame(updatePreview)
@@ -448,6 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setBrightMode,
   setFlashEnabled,
   saveSCR, // ← функція експорту
+  importSCR,
   });
 
   // Tooltip handling: show after 1s, hide after 5s
