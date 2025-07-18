@@ -326,7 +326,7 @@ async function updatePreview(cacheOnly = false) {
         docH % 8 ||
         docW > 512 ||
         docH > 384 ||
-        !/8/.test(bits) || // d.bitsPerChannel returns string "bitDepth8"
+        !/(8|16)/.test(bits) || // supports 8-bit and 16-bit
         !/rgb/.test(modeStr);
 
       const formatChanged =
