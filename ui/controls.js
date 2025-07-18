@@ -86,7 +86,13 @@ function setupControls({
     if (selSys) selSys.value = settings.systemScale;
   }
   if (settings.ditherAlg && selAlg) selAlg.value = settings.ditherAlg;
-  if (settings.brightMode && brightSel) brightSel.value = settings.brightMode;
+  if (settings.brightMode && brightSel) {
+    brightSel.dataset.mode = settings.brightMode;
+    setBrightMode(settings.brightMode);
+  } else if (brightSel && !brightSel.dataset.mode) {
+    brightSel.dataset.mode = 'on';
+  }
+  updateBrightUI();
   if (typeof settings.flashEnabled === 'boolean' && flashChk) {
     flashChk.checked = settings.flashEnabled;
     setFlashEnabled(flashChk.checked);
@@ -94,6 +100,18 @@ function setupControls({
 
   // Синхронізуємо selectedAlg у main.js з UI після відновлення
   if (selAlg) setAlgorithm(selAlg.value);
+
+  function updateBrightUI() {
+    if (!brightSel) return;
+    const mode = brightSel.dataset.mode || 'auto';
+    const onIcon = document.getElementById('brightOnIcon');
+    const offIcon = document.getElementById('brightOffIcon');
+    const autoIcon = document.getElementById('brightAutoIcon');
+    if (onIcon) onIcon.classList.toggle('hidden', mode !== 'on');
+    if (offIcon) offIcon.classList.toggle('hidden', mode !== 'off');
+    if (autoIcon) autoIcon.classList.toggle('hidden', mode !== 'auto');
+  }
+
 
   // Helper to update zoom label and preview
   function updateZoomLabelAndPreview() {
@@ -104,7 +122,7 @@ function setupControls({
       zoomPreview: zoom,
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value,
+      brightMode: brightSel?.dataset.mode,
       flashEnabled: flashChk?.checked
     });
     updatePreview();
@@ -118,18 +136,24 @@ function setupControls({
       ditherAlg: selAlg.value,
       zoomPreview: getZoom(),
       systemScale: getSystemScale(),
-      brightMode: brightSel?.value,
+      brightMode: brightSel?.dataset.mode,
       flashEnabled: flashChk?.checked
     });
     updatePreview();
   });
 
-  // Bright mode selector
-  brightSel?.addEventListener("change", () => {
-    setBrightMode(brightSel.value);
+  // Bright mode toggle button
+  brightSel?.addEventListener("click", () => {
+    const modes = ["on", "off", "auto"];
+    const cur = brightSel.dataset.mode || "auto";
+    const idx = modes.indexOf(cur);
+    const next = modes[(idx + 1) % modes.length];
+    brightSel.dataset.mode = next;
+    setBrightMode(next);
+    updateBrightUI();
     saveSettings({
       ...loadSettings(),
-      brightMode: brightSel.value,
+      brightMode: next,
       zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
@@ -146,7 +170,7 @@ function setupControls({
       zoomPreview: getZoom(),
       systemScale: getSystemScale(),
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value
+      brightMode: brightSel?.dataset.mode
     });
     updatePreview();
   });
@@ -197,7 +221,7 @@ function setupControls({
       systemScale: getSystemScale(),
       zoomPreview: getZoom(),
       ditherAlg: selAlg?.value,
-      brightMode: brightSel?.value,
+      brightMode: brightSel?.dataset.mode,
       flashEnabled: flashChk?.checked
     });
     updatePreview();
@@ -311,7 +335,7 @@ function setupControls({
           systemScale: ssVal,
           zoomPreview: getZoom(),
           ditherAlg: selAlg?.value,
-          brightMode: brightSel?.value,
+          brightMode: brightSel?.dataset.mode,
           flashEnabled: flashChk?.checked
         });
         updatePreview();
