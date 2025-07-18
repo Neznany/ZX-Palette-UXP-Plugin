@@ -195,4 +195,37 @@ function encodeTiles(indexed, preferDarkInk = true) {
   return tiles;
 }
 
-module.exports = { encodeTile, encodeTiles, computeFillBytes };
+function decodeScr(scr) {
+  if (!scr || scr.length !== 6912) throw new Error('Invalid SCR buffer');
+  const W = 256;
+  const H = 192;
+  const pixels = new Uint8Array(W * H);
+  const attrs = new Array(32 * 24);
+  for (let by = 0; by < 24; by++) {
+    for (let bx = 0; bx < 32; bx++) {
+      const a = scr[6144 + by * 32 + bx];
+      attrs[by * 32 + bx] = {
+        flash: (a >> 7) & 1,
+        bright: (a >> 6) & 1,
+        paper: (a >> 3) & 7,
+        ink: a & 7,
+      };
+    }
+  }
+  for (let y = 0; y < H; y++) {
+    const by = y >> 3;
+    for (let xb = 0; xb < 32; xb++) {
+      const addr = ((y & 0xC0) << 5) | ((y & 0x38) << 2) | ((y & 0x07) << 8) | xb;
+      const byte = scr[addr];
+      const attr = attrs[by * 32 + xb];
+      for (let bit = 0; bit < 8; bit++) {
+        const x = xb * 8 + bit;
+        const bitVal = (byte >> (7 - bit)) & 1;
+        pixels[y * W + x] = bitVal ? attr.ink : attr.paper;
+      }
+    }
+  }
+  return { pixels, attrs, width: W, height: H };
+}
+
+module.exports = { encodeTile, encodeTiles, decodeScr, computeFillBytes };
