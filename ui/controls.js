@@ -1,6 +1,6 @@
 // src/ui/controls.js
 const { app, imaging, core } = require("photoshop");
-const { getRgbaPixels, ensureFlashLayer } = require("../utils/utils");
+const { getRgbaPixels, ensureFlashLayer, convertTo16BitRgba } = require("../utils/utils");
 const { indexedToRgba } = require("../utils/indexed");
 
 function getDomElements() {
@@ -256,7 +256,10 @@ function setupControls({
         // Застосовуємо фільтр ZX
         const indexed = zxFilter(rgba, W, H, flashRgba);
         const outRgba = indexedToRgba(indexed, false);
-        const newData = await imaging.createImageDataFromBuffer(outRgba, {
+        const bitStr = String(d.bitsPerChannel);
+        const bits = /16/.test(bitStr) ? 16 : 8;
+        const outBuf = bits === 16 ? convertTo16BitRgba(outRgba) : outRgba;
+        const newData = await imaging.createImageDataFromBuffer(outBuf, {
           width: W,
           height: H,
           components: 4,
