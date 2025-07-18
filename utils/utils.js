@@ -33,7 +33,7 @@ async function getRgbaPixels(imaging, options, applyAlpha = true) {
  */
 function convertTo8BitRgba(data, pxCount) {
   const comps = data.length / pxCount;
-  const is16 = data.BYTES_PER_ELEMENT === 2;
+  const is16 = data.BYTES_PER_ELEMENT === 2; // 16-bit data contains values in range 0-32767
   const out = new Uint8Array(pxCount * 4);
   for (let i = 0; i < pxCount; i++) {
     const pi = i * comps;
