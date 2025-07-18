@@ -452,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Tooltip handling: show after 1s, hide after 5s
   document.querySelectorAll('.tooltip').forEach(btn => {
-    const tip = btn.querySelector('sp-tooltip');
+    const tip = btn.querySelector('sp-tooltip') || btn.parentElement?.querySelector('sp-tooltip');
     if (!tip) return;
     tip.removeAttribute('open');
     let showT, hideT;
