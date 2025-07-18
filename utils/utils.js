@@ -47,6 +47,26 @@ function convertTo8BitRgba(data, pxCount) {
   return out;
 }
 
+/**
+ * Expand 8-bit RGBA data back to 16-bit representation.
+ * Values in 16-bit documents lie in the range 0-32767.
+ * @param {Uint8Array} data8
+ * @returns {Uint16Array}
+ */
+function convertTo16BitRgba(data8) {
+  const pxCount = data8.length / 4;
+  const out = new Uint16Array(data8.length);
+  for (let i = 0; i < pxCount; i++) {
+    const pi = i * 4;
+    out[pi]     = Math.round(data8[pi]     * 32768 / 255);
+    out[pi + 1] = Math.round(data8[pi + 1] * 32768 / 255);
+    out[pi + 2] = Math.round(data8[pi + 2] * 32768 / 255);
+    out[pi + 3] = data8[pi + 3] << 8;
+  }
+  return out;
+}
+
+
 function findLayerByName(layers, name) {
   for (const layer of layers) {
     if (layer.name === name) return layer;
@@ -61,14 +81,17 @@ function findLayerByName(layers, name) {
 async function addFlashCorners(layer, doc, imaging, replace = true) {
   const W = Math.round(+doc.width);
   const H = Math.round(+doc.height);
-  const buf = new Uint8Array(W * H * 4);
+  const bitStr = String(doc.bitsPerChannel);
+  const bits = /16/.test(bitStr) ? 16 : 8;
+  const buf8 = new Uint8Array(W * H * 4);
   const corners = [
     [0, 0], [W - 1, H - 1]
   ];
   for (const [x, y] of corners) {
     const p = (y * W + x) * 4;
-    buf[p + 3] = 1;
+    buf8[p + 3] = 1;
   }
+  const buf = bits === 16 ? convertTo16BitRgba(buf8) : buf8;
   const imgData = await imaging.createImageDataFromBuffer(buf, {
     width: W,
     height: H,
@@ -117,4 +140,4 @@ async function ensureFlashLayer(doc, imaging) {
   return layer;
 }
 
-module.exports = { getRgbaPixels, findLayerByName, ensureFlashLayer, convertTo8BitRgba };
+module.exports = { getRgbaPixels, findLayerByName, ensureFlashLayer, convertTo8BitRgba, convertTo16BitRgba };

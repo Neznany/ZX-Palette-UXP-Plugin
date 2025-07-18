@@ -319,13 +319,14 @@ async function updatePreview(cacheOnly = false) {
       const docW = Math.round(+d.width),
             docH = Math.round(+d.height);
       const modeStr = String(d.mode || "").toLowerCase();
-      const bits = d.bitsPerChannel;
+      const bitStr = String(d.bitsPerChannel);
+      const bits = /16/.test(bitStr) ? 16 : 8;
 
       invalid = docW % 8 ||
         docH % 8 ||
         docW > 512 ||
         docH > 384 ||
-        !/(8|16)/.test(bits) || // supports 8-bit and 16-bit
+        !/(8|16)/.test(bitStr) || // supports 8-bit and 16-bit
         !/rgb/.test(modeStr);
 
       const formatChanged =
