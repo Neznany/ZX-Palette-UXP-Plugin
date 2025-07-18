@@ -38,9 +38,10 @@ function convertTo8BitRgba(data, pxCount) {
   for (let i = 0; i < pxCount; i++) {
     const pi = i * comps;
     const po = i * 4;
-    out[po]     = is16 ? data[pi]     >> 8 : data[pi];
-    out[po + 1] = is16 ? data[pi + 1] >> 8 : data[pi + 1];
-    out[po + 2] = is16 ? data[pi + 2] >> 8 : data[pi + 2];
+    out[po]     = is16 ? Math.round(data[pi] * 255 / 32768) : data[pi]; // 8-bit or 16-bit conversion
+    // Handle 16-bit values by scaling to 8-bit
+    out[po + 1] = is16 ? Math.round(data[pi + 1] * 255 / 32768) : data[pi + 1];
+    out[po + 2] = is16 ? Math.round(data[pi + 2] * 255 / 32768) : data[pi + 2];
     out[po + 3] = comps === 4 ? (is16 ? data[pi + 3] >> 8 : data[pi + 3]) : 255;
   }
   return out;
