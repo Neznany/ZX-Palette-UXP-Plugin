@@ -17,6 +17,7 @@ function getDomElements() {
     brightSel: document.getElementById("brightModeSel"),
     flashChk: document.getElementById("flashChk"),
     saveScrBtn: document.getElementById("saveScrBtn"),
+    importBtn: document.getElementById("importBtn"),
     // Preferences dialog elements
     btnPrefs: document.getElementById("openPrefs"),
     prefsDialog: document.getElementById("prefsDialog"),
@@ -53,6 +54,7 @@ function setupControls({
   setBrightMode,
   setFlashEnabled,
   saveSCR,
+  importSCR,
 }) {
   const {
     btnDown,
@@ -67,6 +69,7 @@ function setupControls({
     brightSel,
     flashChk,
     saveScrBtn,
+    importBtn,
     // Preferences dialog elements
     btnPrefs,
     prefsDialog,
@@ -193,6 +196,11 @@ function setupControls({
   // Save SCR button
   saveScrBtn?.addEventListener("click", () => {
     saveSCR().catch(console.error);
+  });
+
+  // Import SCR button
+  importBtn?.addEventListener("click", () => {
+    importSCR().catch(console.error);
   });
 
   // Strength slider
