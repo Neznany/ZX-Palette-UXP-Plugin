@@ -285,7 +285,6 @@ async function fetchThumb() {
   }
 }
 
-
 async function updatePreview(cacheOnly = false) {
   if (core.isModal && typeof core.isModal === "function" && core.isModal()) {
     setTimeout(() => updatePreview(cacheOnly), 250);
@@ -396,7 +395,6 @@ async function updatePreview(cacheOnly = false) {
   }
 }
 
-
 async function saveSCR() {
   let indexed, W, H;
 
@@ -457,7 +455,6 @@ async function saveSCR() {
     }
   }
 }
-
 
 // Listen for Photoshop script actions
 action.addNotificationListener(["make", "set", "delete"], () =>
