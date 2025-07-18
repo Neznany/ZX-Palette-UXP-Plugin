@@ -65,6 +65,12 @@ let lastDocBits = "";
 let lastDocWidth = 0;
 let lastDocHeight = 0;
 
+function clearPreview() {
+  img.src = "";
+  thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
+  pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
+}
+
 // Track slider interaction state
 let sliderDragging = false;
 let sliderReleasedAt = 0;
@@ -277,7 +283,7 @@ async function updatePreview(cacheOnly = false) {
     } else {
       const d = app.activeDocument;
       if (!d) {
-        img.src = "";
+        clearPreview();
         return;
       }
       const docW = Math.round(+d.width),
@@ -299,9 +305,7 @@ async function updatePreview(cacheOnly = false) {
 
       if (invalid) {
         if (msg) msg.classList.remove("hidden");
-        img.src = "";
-        thumbCache = { off: "", on: "", indexed: null, w: 0, h: 0 };
-        pixelCache = { rgba: null, flashRgba: null, w: 0, h: 0 };
+        clearPreview();
         lastDocMode = modeStr;
         lastDocBits = bits;
         lastDocWidth = docW;
@@ -422,7 +426,7 @@ async function saveSCR() {
 }
 
 // Listen for Photoshop script actions
-action.addNotificationListener(["make", "set", "delete"], () =>
+action.addNotificationListener(["make", "set", "delete", "open", "close"], () =>
   window.requestAnimationFrame(updatePreview)
 );
 
