@@ -490,8 +490,8 @@ const THRESHOLD7 = [
  * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
  */
 function ditherLineDiag7x7(channel, w, h, t) {
-  t *= 0.95; // зменшуємо t, щоб поріг не був занадто високим
-  const N = 6; // max поріг
+  //t *= 0.95; // зменшуємо t, щоб поріг не був занадто високим
+  const N = 7; // max поріг
   const mid = 255 / 2; // базовий поріг при t=0
   for (let y = 0; y < h; y++) {
     const row = y % 7;
@@ -505,6 +505,40 @@ function ditherLineDiag7x7(channel, w, h, t) {
     }
   }
 }
+
+// dot-matrix 5x5
+// Кожне число — "поріг" для появи діагональної лінії (0…6)
+const dotMatrix5 = [
+  [0, 1, 2, 1, 0],
+  [1, 2, 3, 2, 1],
+  [2, 3, 4, 3, 2],
+  [1, 2, 3, 2, 1],
+  [0, 1, 2, 1, 0]
+];
+
+/**
+ * 7×7 діагональний дізеринг по одному каналу
+ * @param {Uint8Array|Float32Array} channel — буфер одного каналу (0…255)
+ * @param {number} w — ширина
+ * @param {number} h — висота
+ * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
+ */
+function dotMatrix5x5(channel, w, h, t) {
+  const N = 5; // max поріг
+  const mid = 255 / 2; // базовий поріг при t=0
+  for (let y = 0; y < h; y++) {
+    const row = y % 7;
+    const base = y * w;
+    for (let x = 0; x < w; x++) {
+      const idx = base + x;
+      const v = channel[idx];
+      const thrPat = (dotMatrix5[row][x % 7] / N) * 255;
+      const thr = mid * (1 - t) + thrPat * t;
+      channel[idx] = v > thr ? 255 : 0;
+    }
+  }
+}
+
 
 module.exports = {
   thr: threshold,
@@ -522,5 +556,6 @@ module.exports = {
   clustered: ditherClustered,
   random: ditherRandomThreshold,
   linediag7x7: ditherLineDiag7x7,
+  dotmatrix5: dotMatrix5x5,
   checker2x1: ditherCheckerboard2x1,
 };
