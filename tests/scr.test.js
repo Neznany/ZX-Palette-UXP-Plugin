@@ -41,7 +41,7 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   const idx = makeIndexed(256, 192, 2);
   const tiles = encodeTiles(idx);
   assert.strictEqual(tiles.length, 1);
-  const d = decode(tiles[0].bytes);
+  const d = decodeScr(tiles[0].bytes);
   for (const v of d.pixels) assert.strictEqual(v, 1);
   for (const a of d.attrs) assert.strictEqual(a, 16);
 })();

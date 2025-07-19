@@ -343,7 +343,7 @@ function setupControls({
     if (result === 'ok') {
       let value = pickerDialog.value;
       if (value === 'custom') {
-        let num = parseFloat(customField.value);
+        let num = customField.valueAsNumber;
         if (Number.isNaN(num)) num = 100;
         if (num < 100) num = 100;
         if (num > 500) num = 500;
@@ -379,7 +379,7 @@ function setupControls({
   });
 
   function validateCustom() {
-    const num = parseFloat(customField.value);
+    const num = customField.valueAsNumber;
     const valid = !Number.isNaN(num) && num >= 100 && num <= 500; // Validate custom scale input
     if (!valid) customField.setAttribute('invalid', '');
     else customField.removeAttribute('invalid');
