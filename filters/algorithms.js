@@ -519,9 +519,9 @@ const ditherLineDiag7x7 = createMatrixDither(THRESHOLD7, 7);
 // Кожне число — "поріг" для появи діагональної лінії (0…6)
 const dotMatrix5 = [
   [0, 1, 2, 1, 0],
-  [1, 2, 3, 2, 1],
-  [2, 3, 4, 3, 2],
-  [1, 2, 3, 2, 1],
+  [1, 3, 4, 3, 1],
+  [2, 4, 5, 4, 2],
+  [1, 3, 4, 3, 1],
   [0, 1, 2, 1, 0]
 ];
 
@@ -532,7 +532,7 @@ const dotMatrix5 = [
  * @param {number} h — висота
  * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
  */
-const dotMatrix5x5 = createMatrixDither(dotMatrix5, 5);
+const dotMatrix5x5 = createMatrixDither(dotMatrix5, 6);
 
 
 module.exports = {
