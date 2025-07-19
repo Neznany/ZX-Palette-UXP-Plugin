@@ -14,7 +14,7 @@ function getDomElements() {
     selAlg: document.getElementById("ditherAlgSel"),
     rngStr: document.getElementById("ditherStrength"),
     lblStr: document.getElementById("ditherLabel"),
-    brightSel: document.getElementById("brightModeSel"),
+    brightSel: document.getElementById("brightModeBtn"),
     flashChk: document.getElementById("flashChk"),
     saveScrBtn: document.getElementById("saveScrBtn"),
     importBtn: document.getElementById("importBtn"),
@@ -316,7 +316,7 @@ function setupControls({
     prevScale = getSystemScale();
     if (pickerDialog) {
       const raw = prevScale * 100;
-      const current = parseFloat(raw.toFixed(1)) || 100;
+      const current = parseFloat(raw.toFixed(2)) || 100;
       const presetVals = [100, 125, 150, 175, 200, 225, 250];
       const match = presetVals.find(p => Math.abs(p - raw) < 0.01);
       const target = match ? String(match) : "custom";
@@ -324,7 +324,7 @@ function setupControls({
       const item = pickerDialog.querySelector(`sp-menu-item[value="${target}"]`);
       if (item) item.setAttribute("selected", "");
       pickerDialog.value = target;
-      customField.value = current.toFixed(1);
+      customField.value = current.toFixed(2);
       if (target === "custom") {
         customField.disabled = false;
         customField.style.display = "";
@@ -343,7 +343,8 @@ function setupControls({
     if (result === 'ok') {
       let value = pickerDialog.value;
       if (value === 'custom') {
-        let num = customField.valueAsNumber;
+        let num = parseFloat(customField.value.replace(',', '.'));
+        console.log("Custom scale value:", num);
         if (Number.isNaN(num)) num = 100;
         if (num < 100) num = 100;
         if (num > 500) num = 500;
@@ -379,7 +380,8 @@ function setupControls({
   });
 
   function validateCustom() {
-    const num = customField.valueAsNumber;
+    const num = parseFloat(customField.value.replace(',', '.'));
+    console.log("Custom scale value:", num);
     const valid = !Number.isNaN(num) && num >= 100 && num <= 500; // Validate custom scale input
     if (!valid) customField.setAttribute('invalid', '');
     else customField.removeAttribute('invalid');
