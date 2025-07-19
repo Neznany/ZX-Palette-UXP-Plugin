@@ -517,7 +517,7 @@ const dotMatrix5 = [
 ];
 
 /**
- * 7×7 діагональний дізеринг по одному каналу
+ * dot matrix 5x5
  * @param {Uint8Array|Float32Array} channel — буфер одного каналу (0…255)
  * @param {number} w — ширина
  * @param {number} h — висота
@@ -525,15 +525,13 @@ const dotMatrix5 = [
  */
 function dotMatrix5x5(channel, w, h, t) {
   const N = 5; // max поріг
-  const mid = 255 / 2; // базовий поріг при t=0
   for (let y = 0; y < h; y++) {
-    const row = y % 7;
     const base = y * w;
     for (let x = 0; x < w; x++) {
       const idx = base + x;
       const v = channel[idx];
-      const thrPat = (dotMatrix5[row][x % 7] / N) * 255;
-      const thr = mid * (1 - t) + thrPat * t;
+      const m = dotMatrix5[y % N][x % N] / (N * N);
+      const thr = (1 - t) * 0.5 + t * m;
       channel[idx] = v > thr ? 255 : 0;
     }
   }
