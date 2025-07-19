@@ -85,7 +85,7 @@
       display: flex;
       flex-direction: column;
       flex: 0 0 auto;
-      border: 0px solid rgba(255, 255, 255, 0.1);
+      /*border: 0px solid rgba(255, 255, 255, 0.1);*/
     }
 
     .control-row {
@@ -254,12 +254,12 @@
       </div>
     </div>
 
-    <div class="control-block">
+    <div class="control-block" style="border-left: 1px solid rgba(0, 0, 0, 0.2); border-right: 1px solid rgba(0, 0, 0, 0.2);">
       <div class="control-row">
         <label>
-          Dithering:
+          <!--Dithering:-->
           <sp-action-button id="ditherHelpBtn" style="margin: 0px 6px; padding: 0; z-index: 0;">
-            <select id="ditherAlgSel" style="width: 170px; z-index: 0;">
+            <select id="ditherAlgSel" style="width: 160px; z-index: 0;">
               <option value="thr">Threshold</option>
               <option value="checker2x1">Сheckerboard 2x1 </option>
               <option value="bayer2">Bayer 2×2</option>
@@ -280,10 +280,12 @@
       </div>
       <div class="control-row">
         <label>
-          Amount:
-          <sp-slider id="ditherStrength" min="0" max="100" step="1" value="50" variant="filled"
-            style="width: 160px; margin: 0px 4px;">
-          </sp-slider>
+          <!--Power:-->
+          <sp-action-button id="ditherPower" style="margin: 0px 6px; padding: 0; z-index: 0;">
+            <sp-slider id="ditherStrength" min="0" max="100" step="1" value="50" variant="filled"
+              style="width: 160px; margin: 0px 4px;">
+            </sp-slider>
+          </sp-action-button>
           <span id="ditherLabel" style="width: 32px">50%</span>
         </label>
       </div>
@@ -374,7 +376,7 @@
         <sp-menu-item value="200">200%</sp-menu-item>
         <sp-menu-item value="225">225%</sp-menu-item>
         <sp-menu-item value="250">250%</sp-menu-item>
-        <sp-menu-divider style="fill: #500;"></sp-menu-divider>
+        <sp-menu-divider></sp-menu-divider>
         <sp-menu-item value="custom">
           <div style="display:flex; align-items:center;">
             <span>Custom</span>
