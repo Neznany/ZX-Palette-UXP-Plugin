@@ -470,6 +470,30 @@ function ditherRandomThreshold(channel, w, h, t) {
   }
 }
 
+// ——— Generic matrix-based ordered dithering ———
+function createMatrixDither(matrix, denom) {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  if (denom === undefined || denom === null) {
+    let maxV = 0;
+    for (const row of matrix) for (const v of row) if (v > maxV) maxV = v;
+    denom = maxV + 1;
+  }
+  return function (channel, w, h, t) {
+    for (let y = 0; y < h; y++) {
+      const r = matrix[y % rows];
+      const base = y * w;
+      for (let x = 0; x < w; x++) {
+        const idx = base + x;
+        const vNorm = channel[idx] / 255;
+        const m = r[x % cols] / denom;
+        const thr = (1 - t) * 0.5 + t * m;
+        channel[idx] = vNorm > thr ? 255 : 0;
+      }
+    }
+  };
+}
+
 // 7x7 multi-level diagonal pattern (8 градацій, як на зразку)
 // Кожне число — "поріг" для появи діагональної лінії (0…7)
 const THRESHOLD7 = [
@@ -489,22 +513,7 @@ const THRESHOLD7 = [
  * @param {number} h — висота
  * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
  */
-function ditherLineDiag7x7(channel, w, h, t) {
-  //t *= 0.95; // зменшуємо t, щоб поріг не був занадто високим
-  const N = 7; // max поріг
-  const mid = 255 / 2; // базовий поріг при t=0
-  for (let y = 0; y < h; y++) {
-    const row = y % 7;
-    const base = y * w;
-    for (let x = 0; x < w; x++) {
-      const idx = base + x;
-      const v = channel[idx];
-      const thrPat = (THRESHOLD7[row][x % 7] / N) * 255;
-      const thr = mid * (1 - t) + thrPat * t;
-      channel[idx] = v > thr ? 255 : 0;
-    }
-  }
-}
+const ditherLineDiag7x7 = createMatrixDither(THRESHOLD7, 7);
 
 // dot-matrix 5x5
 // Кожне число — "поріг" для появи діагональної лінії (0…6)
@@ -523,19 +532,7 @@ const dotMatrix5 = [
  * @param {number} h — висота
  * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
  */
-function dotMatrix5x5(channel, w, h, t) {
-  const N = 5; // max поріг
-  for (let y = 0; y < h; y++) {
-    const base = y * w;
-    for (let x = 0; x < w; x++) {
-      const idx = base + x;
-      const v = channel[idx];
-      const m = dotMatrix5[y % N][x % N] / (N * N);
-      const thr = (1 - t) * 0.5 + t * m;
-      channel[idx] = v > thr ? 255 : 0;
-    }
-  }
-}
+const dotMatrix5x5 = createMatrixDither(dotMatrix5, 5);
 
 
 module.exports = {
