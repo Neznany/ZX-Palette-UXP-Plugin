@@ -471,7 +471,14 @@ function ditherRandomThreshold(channel, w, h, t) {
 }
 
 // ——— Generic matrix-based ordered dithering ———
-function createMatrixDither(matrix, denom) {
+/**
+ * Build a dithering function from a value matrix.
+ * @param {number[][]} matrix Threshold matrix.
+ * @param {number} [denom] Max value + 1. Auto-detected if omitted.
+ * @param {boolean} [inverted=false] Invert matrix levels.
+ * @param {boolean} [flipped=false] Flip matrix horizontally.
+ */
+function createMatrixDither(matrix, denom, inverted = false, flipped = false) {
   const rows = matrix.length;
   const cols = matrix[0].length;
   if (denom === undefined || denom === null) {
@@ -479,9 +486,13 @@ function createMatrixDither(matrix, denom) {
     for (const row of matrix) for (const v of row) if (v > maxV) maxV = v;
     denom = maxV + 1;
   }
+  // create a copy so original matrix constants remain unchanged
+  let mat = matrix.map(row => row.slice());
+  if (flipped) mat = mat.map(row => row.slice().reverse());
+  if (inverted) mat = mat.map(row => row.map(v => (denom - 1) - v));
   return function (channel, w, h, t) {
     for (let y = 0; y < h; y++) {
-      const r = matrix[y % rows];
+      const r = mat[y % rows];
       const base = y * w;
       for (let x = 0; x < w; x++) {
         const idx = base + x;
