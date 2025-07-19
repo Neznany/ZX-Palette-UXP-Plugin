@@ -488,7 +488,8 @@ document.addEventListener("DOMContentLoaded", () => {
   importSCR,
   });
 
-  // Tooltip handling: show after 1s, hide after 5s
+  // Tooltip handling: show after 1s, hide 0.5s after leave
+  // If cursor returns within 0.5s, show immediately
   document.querySelectorAll('.tooltip').forEach(btn => {
     const tip = btn.querySelector('sp-tooltip') || btn.parentElement?.querySelector('sp-tooltip');
     if (!tip) return;
@@ -497,17 +498,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const cancel = () => {
       clearTimeout(showT);
       clearTimeout(hideT);
+      hideT = null;
       tip.removeAttribute('open');
     };
     btn.addEventListener('mouseenter', () => {
       clearTimeout(showT);
+      if (hideT && tip.hasAttribute('open')) {
+        clearTimeout(hideT);
+        hideT = setTimeout(cancel, 5000);
+        tip.setAttribute('open', '');
+        return;
+      }
       clearTimeout(hideT);
       showT = setTimeout(() => {
         tip.setAttribute('open', '');
         hideT = setTimeout(cancel, 5000);
       }, 1000);
     });
-    btn.addEventListener('mouseleave', cancel);
+    btn.addEventListener('mouseleave', () => {
+      clearTimeout(showT);
+      if (tip.hasAttribute('open')) {
+        clearTimeout(hideT);
+        hideT = setTimeout(cancel, 500);
+      }
+    });
     btn.addEventListener('click', cancel);
   });
 

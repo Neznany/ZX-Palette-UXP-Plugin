@@ -181,7 +181,7 @@ function encodeTiles(indexed, preferDarkInk = true) {
     const paper = indexed.attrs[0].paper & 7;
     const complement = (7 - paper) & 7;
     for (const attr of indexed.attrs) attr.ink = complement;
-    indexed.pixels.fill(paper);s
+    indexed.pixels.fill(paper);
   }
   const fillMap = computeFillBytes(indexed, preferDarkInk);
   const tilesX = Math.ceil(indexed.width / 256);
