@@ -505,7 +505,6 @@ const THRESHOLD7 = [
   [4, 2, 0, 5, 3, 1, 6],
   [2, 0, 5, 3, 1, 6, 4],
 ];
-
 /**
  * 7×7 діагональний дізеринг по одному каналу
  * @param {Uint8Array|Float32Array} channel — буфер одного каналу (0…255)
@@ -516,7 +515,6 @@ const THRESHOLD7 = [
 const ditherLineDiag7x7 = createMatrixDither(THRESHOLD7, 7);
 
 // dot-matrix 5x5
-// Кожне число — "поріг" для появи діагональної лінії (0…6)
 const dotMatrix5 = [
   [0, 1, 2, 1, 0],
   [1, 3, 4, 3, 1],
@@ -524,14 +522,6 @@ const dotMatrix5 = [
   [1, 3, 4, 3, 1],
   [0, 1, 2, 1, 0]
 ];
-
-/**
- * dot matrix 5x5
- * @param {Uint8Array|Float32Array} channel — буфер одного каналу (0…255)
- * @param {number} w — ширина
- * @param {number} h — висота
- * @param {number} t — сила дізерингу 0…1 (0 = ні, 1 = повний)
- */
 const dotMatrix5x5 = createMatrixDither(dotMatrix5, 6);
 
 
