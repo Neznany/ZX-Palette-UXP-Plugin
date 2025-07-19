@@ -4,6 +4,15 @@
 const assert = require('assert');
 const { encodeTiles, decodeScr } = require('../utils/scr');
 
+function attrVal(a) {
+  return typeof a === 'number'
+    ? a
+    : ((a.flash ? 1 : 0) << 7) |
+      ((a.bright ? 1 : 0) << 6) |
+      ((a.paper & 7) << 3) |
+      (a.ink & 7);
+}
+
 function makeIndexed(W, H, ink = 1, paper = 0) {
   const pixels = new Uint8Array(W * H);
   pixels.fill(ink);
@@ -29,8 +38,8 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   }
   for (let by = 0; by < 24; by++) {
     for (let bx = 0; bx < 32; bx++) {
-      const a = d.attrs[by * 32 + bx];
-      if (by < 8 && bx < 8) assert.strictEqual(a, 8);
+      const a = attrVal(d.attrs[by * 32 + bx]);
+      if (by < 8 && bx < 8) assert.strictEqual(a, 1);
       else assert.strictEqual(a, 7);
     }
   }
@@ -42,8 +51,8 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
   const tiles = encodeTiles(idx);
   assert.strictEqual(tiles.length, 1);
   const d = decodeScr(tiles[0].bytes);
-  for (const v of d.pixels) assert.strictEqual(v, 1);
-  for (const a of d.attrs) assert.strictEqual(a, 16);
+  for (const v of d.pixels) assert.strictEqual(v, 2);
+  for (const a of d.attrs) assert.strictEqual(attrVal(a), 2);
 })();
 
 // Case 3: 512x64 -> two tiles
@@ -95,8 +104,8 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
     if (x < 8 && y < 8) assert.strictEqual(val, 3); else assert.strictEqual(val, 0);
   }
   for (let i = 0; i < d.attrs.length; i++) {
-    const a = d.attrs[i];
-    if (i === 0) assert.strictEqual(a, 35); else assert.strictEqual(a, 7);
+    const a = attrVal(d.attrs[i]);
+    if (i === 0) assert.strictEqual(a, 28); else assert.strictEqual(a, 7);
   }
 })();
 
@@ -123,10 +132,10 @@ function makeIndexed(W, H, ink = 1, paper = 0) {
       if (x < 8) assert.strictEqual(val, 0); else assert.strictEqual(val, 1);
     }
   }
-  const a0 = d.attrs[0];
-  const a1 = d.attrs[1];
+  const a0 = attrVal(d.attrs[0]);
+  const a1 = attrVal(d.attrs[1]);
   assert.strictEqual(a0, 0);
-  assert.strictEqual(a1, 8);
+  assert.strictEqual(a1, 1);
 })();
 
 // Case 7: propagation through multiple uniform blocks

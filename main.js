@@ -488,26 +488,69 @@ document.addEventListener("DOMContentLoaded", () => {
   importSCR,
   });
 
-  // Tooltip handling: show after 1s, hide after 5s
+  // Tooltip handling: show after 1s, hide 0.5s after leave
+  // If cursor returns within 0.5s, show immediately and switch instantly when
+  // moving between buttons
+  let activeTip = null;
+  let activeHide = null;
   document.querySelectorAll('.tooltip').forEach(btn => {
     const tip = btn.querySelector('sp-tooltip') || btn.parentElement?.querySelector('sp-tooltip');
     if (!tip) return;
     tip.removeAttribute('open');
-    let showT, hideT;
+    let showT;
+
+    const hideActive = delay => {
+      if (!activeTip) return;
+      clearTimeout(activeHide);
+      activeHide = setTimeout(() => {
+        activeTip.removeAttribute('open');
+        activeTip = null;
+        activeHide = null;
+      }, delay);
+    };
+
+    const openTip = () => {
+      clearTimeout(showT);
+      if (activeTip && activeTip !== tip) {
+        activeTip.removeAttribute('open');
+        clearTimeout(activeHide);
+      }
+      tip.setAttribute('open', '');
+      activeTip = tip;
+      clearTimeout(activeHide);
+      activeHide = setTimeout(() => {
+        tip.removeAttribute('open');
+        activeTip = null;
+        activeHide = null;
+      }, 5000);
+    };
+
     const cancel = () => {
       clearTimeout(showT);
-      clearTimeout(hideT);
-      tip.removeAttribute('open');
+      if (tip.hasAttribute('open')) {
+        clearTimeout(activeHide);
+        tip.removeAttribute('open');
+        if (activeTip === tip) {
+          activeTip = null;
+          activeHide = null;
+        }
+      }
     };
+
     btn.addEventListener('mouseenter', () => {
       clearTimeout(showT);
-      clearTimeout(hideT);
-      showT = setTimeout(() => {
-        tip.setAttribute('open', '');
-        hideT = setTimeout(cancel, 5000);
-      }, 1000);
+      if (activeTip) {
+        openTip();
+      } else {
+        showT = setTimeout(openTip, 1000);
+      }
     });
-    btn.addEventListener('mouseleave', cancel);
+
+    btn.addEventListener('mouseleave', () => {
+      clearTimeout(showT);
+      if (tip.hasAttribute('open')) hideActive(500);
+    });
+
     btn.addEventListener('click', cancel);
   });
 
