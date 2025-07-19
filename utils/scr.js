@@ -7,7 +7,7 @@ const NEIGHBOR_OFFSETS = [
 ];
 
 // Determine majority fill for uniform blocks using iterative passes
-function computeFillBytes(indexed, preferDarkInk = true) {
+function computeFillBytes(indexed, preferDarkInk = false) {
   const { pixels, attrs, width: W, height: H } = indexed;
   const cols = Math.ceil(W / 8);
   const rows = Math.ceil(H / 8);
@@ -175,7 +175,7 @@ function encodeTile(indexed, fillMap, tx = 0, ty = 0) {
 const { optimizeAttributes, _isImageDark } = require('./indexed');
 
 // Split large images into 256x192 tiles encoded as individual .scr buffers
-function encodeTiles(indexed, preferDarkInk = true) {
+function encodeTiles(indexed, preferDarkInk = false) {
   // tweak attributes globally before tiling (only handle fully uniform case)
   if (indexed.attrs.every(a => a.ink === a.paper)) {
     const paper = indexed.attrs[0].paper & 7;
